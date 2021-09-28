@@ -14,26 +14,31 @@ if False:
 
 
 class Graph():
-    def __init__(self, N=3, p=0.1):
+    def __init__(self, N=3, p=0.1, weighted=True):
         self.N = N
         self.p = p
         self.am = ( 
             (np.ones((N,N))-np.identity(N)) * 
             np.where(np.random.rand(N**2)>(1-p),1,0).reshape(N,N)
-        ) * np.random.randint(1,max([N, 1000]),(N,N))
+        ) 
+        if weighted:
+            self.am *= np.random.randint(1,max([N, 1000]),(N,N))
         self.am = self.am.astype('uint8')
         self.i0 = None
         self.tree = None
         self.tree_status = False
-        self.tree_length = 0
+        self.tree_depth = 0
         self.undirected = False
 
     def make_undirected(self):
         self.am = ((self.am.astype('int') + self.am.T.astype('int'))/2).astype('uint8')
         self.undirected = True
 
-    def build_random_tree(self):
-        self.i0 = np.random.randint(0,self.N)
+    def build_random_tree(self, starting_point=False):
+        if starting_point!=False:
+            self.i0 = starting_point
+        else:
+            self.i0 = np.random.randint(0,self.N)
         self.tree = {_:{'parent':[],'children':[]} for _ in range(self.N)}
         build_tree_(self)
         self.tree_status = True

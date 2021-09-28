@@ -98,6 +98,7 @@ def build_tree_(Graph):
     current = [Graph.i0]
     current_children = []
     tot = 1
+    depth = 0
     def flatten(t):
         return [item for sublist in t for item in sublist]
     while sum(marked)!=Graph.N and tot != 0:
@@ -126,11 +127,14 @@ def build_tree_(Graph):
         current = current_children.copy()
         # The list of current children gets reinitialized
         current_children = []
+        # Count depth
+        depth += 1
     # Store the results in the object
     for i in range(Graph.N):
         Graph.tree[i]['parent'] = parent.get(i,[])
         Graph.tree[i]['children'] = children.get(i,[])
-
+    # Store the tree's depth
+    Graph.tree_depth = depth if sum(marked)==Graph.N else np.inf
 
 
 

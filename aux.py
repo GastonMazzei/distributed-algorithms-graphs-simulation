@@ -5,7 +5,7 @@ import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
 
-DEBUG = True
+DEBUG = False
 
 def show_graph_(Graph, layout_n=3):
 
@@ -42,6 +42,7 @@ def show_graph_(Graph, layout_n=3):
         labels = nx.get_edge_attributes(G, "weight")
         # Draw edge labels using layout and list of labels
         nx.draw_networkx_edge_labels(G, pos=layout, edge_labels=labels, ax=ax[0])
+        ax[0].set_title(f'Erdos renyi graph with\nN={Graph.N}, p={Graph.p}, undirected={Graph.undirected}')
     else:
         nx.draw(G, layout, with_labels=True, ax=ax)
         #, node_size=sizes, node_color=color_map)
@@ -74,6 +75,7 @@ def show_graph_(Graph, layout_n=3):
                     node_color=color_map,
                     ax=ax[1]
                     )
+        ax[1].set_title(f'Associated Tree beggining in node {Graph.i0}')
 
 
     # Show plot

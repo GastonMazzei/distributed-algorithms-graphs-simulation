@@ -7,14 +7,16 @@ import matplotlib.pyplot as plt
 
 from aux import show_graph_, build_tree_
 
-SEED = 1234
-np.random.seed(SEED)
+if False:
+    SEED = 1234
+    np.random.seed(SEED)
 
 
 
 class Graph():
     def __init__(self, N=3, p=0.1):
         self.N = N
+        self.p = p
         self.am = ( 
             (np.ones((N,N))-np.identity(N)) * 
             np.where(np.random.rand(N**2)>(1-p),1,0).reshape(N,N)
@@ -24,9 +26,11 @@ class Graph():
         self.tree = None
         self.tree_status = False
         self.tree_length = 0
+        self.undirected = False
 
-    def make_undirected():
-        pass
+    def make_undirected(self):
+        self.am = ((self.am.astype('int') + self.am.T.astype('int'))/2).astype('uint8')
+        self.undirected = True
 
     def build_random_tree(self):
         self.i0 = np.random.randint(0,self.N)
@@ -36,17 +40,22 @@ class Graph():
 
     def view(self):
         try:
-            show_graph_(self,3)
+            show_graph_(self,2)
         except:
             try:
-                show_graph_(self,2)
+                show_graph_(self,0)
             except:
                 try:
                     show_graph_(self,1)
                 except:
-                    show_graph_(self,0)
+                    show_graph_(self,3)
 
 if __name__=='__main__':
-    g = Graph(8,0.5)
+    try:
+        g = Graph(int(sys.argv[1]),float(sys.argv[2]))
+        if sys.argv[3]=='1':
+            g.make_undirected()
+    except:
+        g = Graph(4,0.5)
     g.build_random_tree()
     g.view()

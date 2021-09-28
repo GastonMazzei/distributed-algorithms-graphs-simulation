@@ -1,9 +1,9 @@
 from Graph import Graph
 from uuid import uuid4 
 
-import numpy as np, pandas as pd
+import numpy as np, pandas as pd, matplotlib.pyplot as plt
 
-import sys, os
+import sys, os, pickle
 
 def test_connectivity(A):
     if 0 in np.sum(A, axis=0):
@@ -43,13 +43,13 @@ class IndividualState():
                 other_states: dict = {},
                 weights: dict = {},
                 messages: dict = {},
-                communication_complexity: int = 0,
+                communication_complexity: list = [],
                 **kwargs,
                 ):
         if self.type == "FloodMax":
             if kwargs.get('VERBOSE',False): 
                 print(f'\ntransitioning for u: {self.u}')
-            LIMIT = self.diam + 4
+            LIMIT = self.diam * 2
             if self.rounds == 0:
                 for k in keys:
                     messages[k] = [ other_states[k].u]
@@ -65,13 +65,13 @@ class IndividualState():
                 if kwargs.get('VERBOSE',False):
                     print(f'answer is {self.answer}')
             elif self.rounds == LIMIT:
-                communication_complexity += len(keys)
+                communication_complexity[0] += len(keys)
                 if self.max_uid == self.u:
                     self.leader = True
                 else:
                     self.leader = False
                 return True
-            communication_complexity += len(keys)
+            communication_complexity[0] += len(keys)
             return False
 
 class FloodMaxSimulation():
@@ -82,7 +82,7 @@ class FloodMaxSimulation():
         self.E = count_edges(self.graph)
         self.diam = compute_diam(self.graph)
         self.ix = np.asarray(range(N))
-        self.coms = 0
+        self.coms = [0]
         self.time = 0
         self.GLOBAL_HALTING_STATE = False
 
@@ -131,6 +131,7 @@ class FloodMaxSimulation():
             print('starting simulation')
             counter = 0
         while True:
+#            if True:
             try:
                 self.Iterate(VERBOSE = VERBOSE)
             except:
@@ -172,13 +173,46 @@ def main(N, p, VERBOSE = False):
     if VERBOSE: S.graph.view()
     S.InitializeProcessors(type_of_simulation = "FloodMax", diam = S.diam)   
     S.PerformSimulation(VERBOSE = VERBOSE)
+    UniqueLeader = True if sum([P.leader for P in S.States])==1 else 0
     if VERBOSE: 
         print([P.leader for P in S.States])
-        print(f'There are {sum([P.leader for P in S.States])} leaders')
+        print(f'There are {UniqueLeader} leaders')
         print(f'uids are {[P.u for P in S.States]}')
         print(f'The max UID is: {max([P.u for P in S.States])}, and the leader\'s is {[P.max_uid for P in S.States][0] if len(set([P.max_uid for P in S.States]))==1 else [P.max_uid for P in S.States]}')
+    if UniqueLeader:
+        return (S.time, S.coms[0], S.E, S.diam)
+    else:
+        print([P.leader for P in S.States])
+        raise Exception("Script failed")
 
 if __name__=='__main__':
-    main(3,0.2, VERBOSE=False)
+    VERBOSE = False
+    results = {'N':[], 'P':[], 'T':[], 'C':[], 'E':[], 'D':[]}
+    for p in [0.2]:
+        for N in range(1,50):
+            T_loc, C_loc, E_loc, D_loc = main(N,p, VERBOSE = VERBOSE)
+            results['N'].append(N)
+            results['P'].append(p)
+            results['T'] += [T_loc].copy()
+            results['C'] += [C_loc].copy()
+            results['E'] += [E_loc].copy()
+            results['D'] += [D_loc].copy()
 
+    try:
+        with open('exhaustive_simulation/results-floodmax.pkl', 'rb') as f:
+            previous_data = pickle.load(f)
+    except:
+        previous_data = {}
+
+    with open('exhaustive_simulation/results-floodmax.pkl', 'wb') as f:
+        pickle.dump({**results, **previous_data}, f)        
+
+    plt.plot(results['N'], results['C'],label='Messages')
+    plt.plot(results['N'], results['E'],label='Edges')
+    plt.ylabel('Number')
+    plt.xlabel('Nodes')
+    plt.legend()
+    #plt.yscale('log')
+    plt.show()
+    
 

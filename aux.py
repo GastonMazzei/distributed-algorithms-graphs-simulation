@@ -90,6 +90,29 @@ def tree_to_adjcacency_matrix(tree):
             A[i,j] = 1
     return A
 
+def test_connectivity(A):
+    if 0 in np.sum(A, axis=0):
+        return False
+    if 0 in np.sum(A, axis=1):
+        return False
+    return True
+
+def count_edges(Graph):
+    aux = np.where(Graph.am.flatten()>0,1,0)
+    if Graph.undirected:
+        return np.sum(aux)//2    
+    else:
+        return np.sum(aux)    
+
+
+def compute_diam(Graph):
+    diam = np.inf
+    for i in range(Graph.N):
+        Graph.build_random_tree(starting_point=i)
+        diam = min([diam, Graph.tree_depth])
+    return diam
+
+
 def build_tree_(Graph):
     ixs = np.asarray(range(Graph.N))
     marked = [False if _ != Graph.i0 else True for _ in range(Graph.N)]

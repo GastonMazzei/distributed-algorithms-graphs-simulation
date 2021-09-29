@@ -7,7 +7,6 @@ import sys, os, pickle
 
 from aux import compute_diam, count_edges, test_connectivity
 
-from IndividualState import IndividualState as IndividualState
 
 def sub_iteration(Simulation, i, VERBOSE = False):
     # Avoid interacting with each neighbor individually as in general

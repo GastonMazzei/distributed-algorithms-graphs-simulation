@@ -7,16 +7,26 @@ import sys, os, pickle
 
 from aux import compute_diam, count_edges, test_connectivity
 
-from IndividualState import IndividualState as IndividualState
-from Simulation_aux import sub_iteration
+from exhaustive_simulation.IndividualState import IndividualState as IndividualState
+from exhaustive_simulation.Simulation_aux import sub_iteration
 
 class Simulation():
     def __init__(self, N, p):
+        self.i_ = 0
+        self.TOL = 10000
         self.graph = Graph(N,p, weighted=False)
-        while not(test_connectivity(self.graph.am)):
-            self.graph = Graph(N,p)
-        self.E = count_edges(self.graph)
         self.diam = compute_diam(self.graph)
+        while ((self.diam==np.inf or not test_connectivity(self.graph.am)) and 
+                self.i_ < self.TOL):
+            self.graph = Graph(N,p)
+            self.diam = compute_diam(self.graph)
+            self.i_ += 1
+        if self.i_==self.TOL:
+            self.constructor_success = False
+            raise Exception(f'Couldnt find a connecte graph that fullfills the requirements')
+        else:
+            self.constructor_success = True
+        self.E = count_edges(self.graph)
         self.ix = np.asarray(range(N))
         self.coms = [0]
         self.time = 0

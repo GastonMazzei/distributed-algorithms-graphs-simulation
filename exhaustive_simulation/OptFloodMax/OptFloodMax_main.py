@@ -21,7 +21,7 @@ def main(N, p, VERBOSE = False):
             print('Script Failed')
             return (0,0,0,0,False)
     if VERBOSE: S.graph.view()
-    S.InitializeProcessors(type_of_simulation = "FloodMax", diam = S.diam)   
+    S.InitializeProcessors(type_of_simulation = "OptFloodMax", diam = S.diam)   
     S.PerformSimulation(VERBOSE = VERBOSE)
     UniqueLeader = True if sum([P.leader for P in S.States])==1 else 0
     if VERBOSE: 
@@ -50,12 +50,12 @@ if __name__=='__main__':
                 results['D'] += [D_loc].copy()
 
     try:
-        with open('exhaustive_simulation/FloodMax/results-floodmax.pkl', 'rb') as f:
+        with open('exhaustive_simulation/OptFloodMax/results-optfloodmax.pkl', 'rb') as f:
             previous_data = pickle.load(f)
     except:
         previous_data = {}
 
-    with open('exhaustive_simulation/FloodMax/results-floodmax.pkl', 'wb') as f:
+    with open('exhaustive_simulation/OptFloodMax/results-optfloodmax.pkl', 'wb') as f:
         pickle.dump({**results, **previous_data}, f)        
 
     LOW_QUALITY_PLOT = False
@@ -68,4 +68,3 @@ if __name__=='__main__':
         #plt.yscale('log')
         plt.show()
     
-

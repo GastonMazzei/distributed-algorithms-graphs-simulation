@@ -11,7 +11,7 @@ from aux import compute_diam, count_edges, test_connectivity
 class IndividualState():
     def __init__(self, type_of_state = 'FloodMax', u = 0, **kwargs):
         self.u = u
-        self.answer = []
+        self.answer = {}
         self.type = type_of_state
         if type_of_state == 'FloodMax':
             #specifics go here!
@@ -50,6 +50,7 @@ class IndividualState():
             if kwargs.get('VERBOSE',False): 
                 print(f'\ntransitioning for u: {self.u}')
             LIMIT = self.diam 
+            # Initialization
             if self.rounds == 0:
                 for k in keys:
                     messages[k] = [ other_states[k].u]
@@ -61,9 +62,11 @@ class IndividualState():
                 print(f'round {self.rounds}, u {self.u}, mesgs {messages}')
                 print(f'limit is {LIMIT}')
             if self.rounds < LIMIT:
-                self.answer = [[self.max_uid] for _ in range(len(out_keys))]
+                self.answer = {k:[self.max_uid] for k in out_keys}
                 if kwargs.get('VERBOSE',False):
                     print(f'answer is {self.answer}')
+                communication_complexity[0] += len(keys)
+                return False
             elif self.rounds == LIMIT:
                 communication_complexity[0] += len(keys)
                 if self.max_uid == self.u:
@@ -71,8 +74,6 @@ class IndividualState():
                 else:
                     self.leader = False
                 return True
-            communication_complexity[0] += len(keys)
-            return False
 
         if self.type == "OptFloodMax":
             if kwargs.get('VERBOSE',False): 
@@ -91,20 +92,20 @@ class IndividualState():
                 print(f'limit is {LIMIT}')
             if self.rounds < LIMIT:
                 if previous_max!=self.max_uid:
-                    self.answer = [[self.max_uid] if out_keys[i] not in self.already_seen else [-1] for i in range(len(out_keys))]
+                    self.answer = {k:[self.max_uid] for k in out_keys}
                 else:
-                    self.answer = [[-1] for _ in range(len(out_keys))]
+                    self.answer = {k:[-1] for k in out_keys}
                 if kwargs.get('VERBOSE',False):
                     print(f'answer is {self.answer}')
             elif self.rounds == LIMIT:
-                communication_complexity[0] += len([x for x in self.answer if x[0]!=-1])
+                communication_complexity[0] += len([v for v in self.answer.values() if v[0]!=-1])
                 if self.max_uid == self.u:
                     self.leader = True
                 else:
                     self.leader = False
                 return True
             #self.already_seen += 
-            communication_complexity[0] += len([x for x in self.answer if x[0]!=-1])
+            communication_complexity[0] += len([v for v in self.answer.values() if v[0]!=-1])
             return False
 
         if self.type == "SynchBFS":

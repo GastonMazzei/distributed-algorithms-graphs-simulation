@@ -25,7 +25,7 @@ class IndividualState():
             self.leader = None
             self.rounds = 0
             self.diam = kwargs['diam']
-            self.already_seen = []
+            self.previous_round_seen = []
         if type_of_state == "SynchBFS" :
             self.marked = False
             self.parent = None
@@ -83,6 +83,7 @@ class IndividualState():
             if self.rounds == 0:
                 for k in keys:
                     messages[k] = [ other_states[k].u]
+                self.previous_round_seen =  keys
             # Weights will be ignored
             self.rounds += 1
             max_arriving_uid = max([messages[k][0] for k in keys])
@@ -91,10 +92,15 @@ class IndividualState():
                 print(f'round {self.rounds}, u {self.u}, mesgs {messages}')
                 print(f'limit is {LIMIT}')
             if self.rounds < LIMIT:
+                # One improvement
                 if previous_max!=self.max_uid:
                     self.answer = {k:[self.max_uid] for k in out_keys}
                 else:
                     self.answer = {k:[-1] for k in out_keys}
+                # Further improvement
+                for k in self.answer.keys():
+                    if k in self.previous_round_seen:
+                        self.answer[k] = [-1]
                 if kwargs.get('VERBOSE',False):
                     print(f'answer is {self.answer}')
             elif self.rounds == LIMIT:
@@ -104,27 +110,26 @@ class IndividualState():
                 else:
                     self.leader = False
                 return True
-            #self.already_seen += 
+            self.previous_round_seen =  keys
             communication_complexity[0] += len([v for v in self.answer.values() if v[0]!=-1])
             return False
 
         if self.type == "SynchBFS":
             if self.marked:
-                self.answer = [[-1] for _ in range(len(out_keys))]
+                self.answer = {k:[-1] for k in out_keys}
                 # request halting if all the nodes are marked
                 marked_status = [P.marked for P in kwargs['Simulation'].States]
                 return all(marked_status)
-            incoming_messages = []
-            for k in keys:
-                incoming_messages += [other_states[k].msg]
+            incoming_messages = [v[0] for v in messages.values()]
             if 'search' in incoming_messages:
                 self.marked = True
                 self.msg = 'search'
+            else:
+                self.msg = -1
             self.rounds += 1
-            self.answer = [[self.max_uid] for _ in range(len(out_keys))]
+            self.answer = {k: [self.msg] for k in out_keys}
+            communication_complexity[0] += len(keys)
             if kwargs.get('VERBOSE',False):
                 print(f'round {self.rounds}, u {self.u}, mesgs {messages}')
                 print(f'answer is {self.answer}')
-
-            communication_complexity[0] += len(keys)
             return False

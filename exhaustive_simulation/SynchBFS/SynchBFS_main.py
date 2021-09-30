@@ -21,7 +21,9 @@ def main(N, p, VERBOSE = False):
             print('Script Failed')
             return (0,0,0,0,False)
     if VERBOSE: S.graph.view()
-    S.InitializeProcessors({'type_of_simulation' : "FloodMax", 'diam' : S.diam})   
+    S.InitializeProcessors(
+        **{'diam' :  S.diam, 'type_of_state' : "SynchBFS"
+         } )   
     S.PerformSimulation(VERBOSE = VERBOSE)
     UniqueLeader = True if sum([P.leader for P in S.States])==1 else 0
     if VERBOSE: 

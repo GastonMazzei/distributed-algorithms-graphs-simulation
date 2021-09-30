@@ -41,12 +41,10 @@ class Simulation():
         self.MessageLog = []
         self.FutureMessageLog = []
         for _ in range(self.graph.N):
-            self.States += [IndividualState(**kwargs
-            #{
-             #                       'type_of_simulation':type_of_simulation,
-              #                      'u': uuid4().int//2**64,
-              #                      **kwargs}
-              )]
+            self.States += [IndividualState(
+                                        **kwargs,
+                                        u = uuid4().int//2**64,
+                                            )]
             self.MessageLog += [[[-1] for _ in range(self.graph.N)]]
             self.FutureMessageLog += [[[-1] for _ in range(self.graph.N)]]
     

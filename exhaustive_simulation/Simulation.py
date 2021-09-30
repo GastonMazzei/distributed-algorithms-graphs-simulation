@@ -32,7 +32,7 @@ class Simulation():
         self.time = 0
         self.GLOBAL_HALTING_STATE = False
 
-    def InitializeProcessors(self, type_of_simulation: str = "FloodMax", **kwargs):
+    def InitializeProcessors(self, **kwargs):
         """
         Assign UIDs to each of the graph's elements, 
         and give them a "state"
@@ -41,10 +41,12 @@ class Simulation():
         self.MessageLog = []
         self.FutureMessageLog = []
         for _ in range(self.graph.N):
-            self.States += [IndividualState(**{
-                                    'type_of_simulation':"FloodMax",
-                                    'u': uuid4().int//2**64,
-                                    **kwargs})]
+            self.States += [IndividualState(**kwargs
+            #{
+             #                       'type_of_simulation':type_of_simulation,
+              #                      'u': uuid4().int//2**64,
+              #                      **kwargs}
+              )]
             self.MessageLog += [[[-1] for _ in range(self.graph.N)]]
             self.FutureMessageLog += [[[-1] for _ in range(self.graph.N)]]
     

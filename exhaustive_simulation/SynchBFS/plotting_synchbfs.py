@@ -6,7 +6,7 @@ import numpy as np, matplotlib.pyplot as plt
 if __name__=='__main__':
 
     # Open
-    with open('exhaustive_simulation/results-floodmax.pkl', 'rb') as f:
+    with open('exhaustive_simulation/FloodMax/results-floodmax.pkl', 'rb') as f:
         results = pickle.load(f)
 
     # Prepare two axis

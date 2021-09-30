@@ -9,10 +9,10 @@ from aux import compute_diam, count_edges, test_connectivity
 
 
 class IndividualState():
-    def __init__(self, **kwargs):
-        self.u = kwargs.get('u',0)
+    def __init__(self, type_of_state = 'FloodMax', u = 0, **kwargs):
+        self.u = u
         self.answer = []
-        self.type = kwargs.get('type_of_state', 'FloodMax')
+        self.type = type_of_state
         if type_of_state == 'FloodMax':
             #specifics go here!
             self.max_uid = u 

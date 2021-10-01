@@ -1,0 +1,39 @@
+****RING ELECTION with LCR
+
+****RING ELECTION with HS
+
+
+****OptSynchBFS: to reduce the communication complexity, dont send "search" to any node from which it has already recieved.
+
+
+****MessageBroadcast: it's not relevant to our case, as it's just  a self.piggyback 
+
+
+****ChildPointers in unidirectional:
+
+The sending message should be changes so that
+
+['search' OR -1] 
+
+becomes 
+
+[ ('search' OR -1, my_uid OR -1, (parents_id, k) or -1) ]
+
+so in this case the null message becomes
+
+[-1,-1,-1]
+
+And a non-search broadcast (parental information) looks like this
+
+[-1,-1, (parents_id, k)], 
+
+but a regular search looks like this:
+
+['search', my_uid, -1], 
+
+And they could happen at the same time like this:
+
+[('search', my_uid, (parents_id, k)]
+
+
+

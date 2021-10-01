@@ -28,10 +28,12 @@ class IndividualState():
             self.previous_round_seen = []
         if type_of_state == "SynchBFS" :
             self.marked = False
+            self.previous_mark = False
             self.parent = None
             self.diam = kwargs['diam']
             self.rounds = 0
             self.msg = -1
+            self.i0 = kwargs['i0']
 
     def transition(self, 
                 keys = [],
@@ -115,21 +117,24 @@ class IndividualState():
             return False
 
         if self.type == "SynchBFS":
-            if self.marked:
-                self.answer = {k:[-1] for k in out_keys}
-                # request halting if all the nodes are marked
-                marked_status = [P.marked for P in kwargs['Simulation'].States]
-                return all(marked_status)
+            if self.rounds == 0:
+                # Am I "i0"?
+                my_ix = np.argmax([0 if P.u!=u else 1 for P in kwargs['Simulation'].States])
             incoming_messages = [v[0] for v in messages.values()]
-            if 'search' in incoming_messages:
+            if (not self.previous_mark) and (('search' in incoming_messages) or 
+                                            (my_ix == self.i0)):
+                msg = 'search'
                 self.marked = True
-                self.msg = 'search'
             else:
-                self.msg = -1
+                msg = -1
+                #assert(self.marked == True)
+            self.answer = {k:[-1] for k in out_keys}
             self.rounds += 1
-            self.answer = {k: [self.msg] for k in out_keys}
+            self.previous_mark = [self.marked].copy()[0]
             communication_complexity[0] += len(keys)
+            marked_status = [P.marked for P in kwargs['Simulation'].States]
+            print(f'only {len(marked_status)} out of {len([m for m in marked_status if m==True])} are marked!')
             if kwargs.get('VERBOSE',False):
                 print(f'round {self.rounds}, u {self.u}, mesgs {messages}')
                 print(f'answer is {self.answer}')
-            return False
+            return all(marked_status)

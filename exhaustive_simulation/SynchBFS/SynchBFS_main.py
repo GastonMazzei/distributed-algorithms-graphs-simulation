@@ -21,27 +21,16 @@ def main(N, p, VERBOSE = False):
             print('Script Failed')
             return (0,0,0,0,False)
     if VERBOSE: S.graph.view()
-    S.InitializeProcessors(
-        **{'diam' :  S.diam, 'type_of_state' : "SynchBFS"
-         } )   
+    params = {'diam' :  S.diam, 'type_of_state' : "SynchBFS", 'i0': 0}
+    S.InitializeProcessors(**params)   
     S.PerformSimulation(VERBOSE = VERBOSE)
-    UniqueLeader = True if sum([P.leader for P in S.States])==1 else 0
-    if VERBOSE: 
-        print([P.leader for P in S.States])
-        print(f'Is there only one leader? {UniqueLeader}')
-        print(f'uids are {[P.u for P in S.States]}')
-        print(f'The max UID is: {max([P.u for P in S.States])}, and the leader\'s is {[P.max_uid for P in S.States][0] if len(set([P.max_uid for P in S.States]))==1 else [P.max_uid for P in S.States]}')
-        print([P.leader for P in S.States])
-    if UniqueLeader:
-        return (S.time, S.coms[0], S.E, S.diam, True)
-    else:
-        return (0,0,0,0,False)
+    return (S.time, S.coms[0], S.E, S.diam, True)
 
 if __name__=='__main__':
     VERBOSE = [False, True][0]
     results = {'N':[], 'P':[], 'T':[], 'C':[], 'E':[], 'D':[]}
-    for p in [0.2]:
-        for N in range(5,100,5):
+    for p in [0.1]:
+        for N in [5,10,15,20,25,30,40,50,75,100,150,200,250, 300, 350, 400]:
             T_loc, C_loc, E_loc, D_loc, b = main(N,p, VERBOSE = VERBOSE)
             if b:
                 results['N'].append(N)

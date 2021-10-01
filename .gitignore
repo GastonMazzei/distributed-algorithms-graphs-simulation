@@ -1,2 +1,4 @@
 __init__.py/*
 __init__.py
+exhaustive_simulation/__pycache__
+exhaustive_simulation/__pycache__/*

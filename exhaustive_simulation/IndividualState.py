@@ -119,22 +119,27 @@ class IndividualState():
         if self.type == "SynchBFS":
             if self.rounds == 0:
                 # Am I "i0"?
-                my_ix = np.argmax([0 if P.u!=u else 1 for P in kwargs['Simulation'].States])
+                my_ix = np.argmax([0 if P.u!=self.u else 1 for P in kwargs['Simulation'].States])
+            else: 
+                my_ix = -1
             incoming_messages = [v[0] for v in messages.values()]
             if (not self.previous_mark) and (('search' in incoming_messages) or 
                                             (my_ix == self.i0)):
                 msg = 'search'
                 self.marked = True
+                if my_ix == self.i0:
+                    self.parent = -1 # "-1" means root!
+                elif 'search' in incoming_messages:
+                    self.parent = np.random.choice(list(keys))
             else:
                 msg = -1
-                #assert(self.marked == True)
-            self.answer = {k:[-1] for k in out_keys}
+            self.answer = {k:[msg] for k in out_keys}
             self.rounds += 1
             self.previous_mark = [self.marked].copy()[0]
-            communication_complexity[0] += len(keys)
+            communication_complexity[0] += len([v for v in self.answer.values() if v[0]!=-1])
             marked_status = [P.marked for P in kwargs['Simulation'].States]
-            print(f'only {len(marked_status)} out of {len([m for m in marked_status if m==True])} are marked!')
             if kwargs.get('VERBOSE',False):
+                print(f'out of, {len(marked_status)} only {len([m for m in marked_status if m==True])} are marked!')
                 print(f'round {self.rounds}, u {self.u}, mesgs {messages}')
                 print(f'answer is {self.answer}')
             return all(marked_status)

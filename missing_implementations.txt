@@ -35,5 +35,24 @@ And they could happen at the same time like this:
 
 [('search', my_uid, (parents_id, k)]
 
+If we add another channel for notification of completion, then the time complexity is
+
+O(diam^2), 
+
+The communication complexity is 
+
+O(diam^2 * |E|)
+
+
+
+****BellmanFord (in unidirectional): yes
+complexity is (n-1) for time and (n-1)*|E| for communication
+
+
+
+
+
+
+
 
 

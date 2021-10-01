@@ -34,6 +34,12 @@ class IndividualState():
             self.rounds = 0
             self.msg = -1
             self.i0 = kwargs['i0']
+        if type_of_state == "BellmanFord":
+            self.i0 = kwargs['i0']
+            self.parent = None
+            self.dist = np.inf
+            self.rounds = 0
+            self.msg = -1
 
     def transition(self, 
                 keys = [],
@@ -143,3 +149,32 @@ class IndividualState():
                 print(f'round {self.rounds}, u {self.u}, mesgs {messages}')
                 print(f'answer is {self.answer}')
             return all(marked_status)
+
+        if self.type == "BellmanFord":
+            if self.rounds == 0:
+                # Am I "i0"?
+                my_ix = np.argmax([0 if P.u!=self.u else 1 for P in kwargs['Simulation'].States])
+                if my_ix == self.i0:
+                    self.dist = 0
+                    self.parent = -1
+                messages = {k : np.inf for k in keys}
+            options = {k : weights[k] + messages[k] for k in keys}
+            v = list(options.values())
+            if min(v)<self.dist:
+                self.dist = min(v)
+                self.parent = [k for k in keys if options[k] == min(v)][0]
+            msg = [self.dist].copy()[0]
+            self.answer = {k:[msg] for k in out_keys}
+            self.rounds += 1
+            communication_complexity[0] += len(out_keys)
+            parental_status = [P.parent for P in kwargs['Simulation'].States]
+            if kwargs.get('VERBOSE',False):
+                print(f'round {self.rounds}, u {self.u}, mesgs {messages}')
+                print(f'answer is {self.answer}')
+            if self.rounds >= len(parental_status):
+                return True
+            else:
+                return False
+#            return len(parental_status) == len([p for p in parental_status if p != None])
+
+

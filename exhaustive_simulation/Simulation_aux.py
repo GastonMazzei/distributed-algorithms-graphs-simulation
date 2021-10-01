@@ -22,7 +22,7 @@ def sub_iteration(Simulation, i, VERBOSE = False, **kwargs):
             messages = {j : Simulation.MessageLog[j][i] for j in indexes},
             communication_complexity = Simulation.coms,
             Simulation = Simulation,
-             **kwargs
+             **kwargs,
             ) or  Simulation.GLOBAL_HALTING_STATE
     )
     for k in out_indexes:    

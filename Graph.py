@@ -22,7 +22,7 @@ class Graph():
             np.where(np.random.rand(N**2)>(1-p),1,0).reshape(N,N)
         ) 
         if weighted:
-            self.am *= np.random.randint(1,max([N, 1000]),(N,N))
+            self.am *= np.random.choice(range(1,2*N**2), N**2, replace=False).reshape((N,N))
         self.am = self.am.astype('uint8')
         self.i0 = None
         self.tree = None

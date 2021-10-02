@@ -200,6 +200,8 @@ class IndividualState():
                 self.component = {
                                 #'connections': kwargs['Simulation'].graph.am.copy() * 0,
                                 'leader' : self.u,
+                                'connections': {self.ix : []},
+                                'new_connections':{}
                 }
                 self.component['members'] = [self.ix]
             # Initialize stuff for rounds 1 of level "k"
@@ -222,55 +224,54 @@ class IndividualState():
             #       [...] 2 more pend
             if self.leader:
                 # If leader and first round, search!
+                #DEBUGprint('leader is here!')
                 if self.rounds == 1:
                     # Compute your own min outgoing edge please
-                    potential_MWOEs = [(weights[k],k) for k in out_keys if k not in self.component['members']]
+                    potential_MWOEs = [(weights[k],k) for k in out_keys if k not in self.component['connections'][self.ix]]
                     if len(potential_MWOEs) > 0:
                         MWOE, MWOE_ix = zip(*potential_MWOEs)
                         MWOE_ix = MWOE_ix[np.argmin(MWOE)]
                         MWOE = min(MWOE)
                     msg = 'search'
-                    self.answer = {k:[msg, self.ix] for k in out_keys}
                     self.cache = {
                         'MWOE': [MWOE, MWOE_ix], 
-                        'unseen_neighbors':[k for k in out_keys if k in self.component['members']],
+                        'unseen_neighbors':[k for k in out_keys if k in self.component['connections'][self.ix]],
                     }
-                    self.rounds += 1
-                    print('return 1')
-                    return False
-                # Else the leader is an active member of the level 
-                elif self.component['part'] == 1:
-                    if self.component['part'] == 1:
-                        for k,m in messages.items():
-                            if m != [-1]:
-                                if m[0] == 'convergecast':
-                                    if self.cache['MWOE'][0]>m[2]:
-                                        self.cache['MWOE'] = [m[2], m[1]]
-                                    self.cache['unseen_neighbors'].pop(self.cache['unseen_neighbors'].index(m[1]))
-                        if len(self.cache['unseen_neighbors']) == 0:
-                            self.component['part'] = 2
-                            self.answer = {k :(
-                                        ['elect new leader',
-                                         self.cache['MWOE'][1],
-                                          self.cache['MWOE'][0],
-                                          ]) if k in self.component['members'] 
-                                            else [-1] for k in out_keys}
-                            try:
-                                del self.answer[self.ix]
-                            except:
-                                pass
-                            if len(self.component['members'])>1:
-                                print('return 2')
-                                return False
-                if self.component['part'] == 1:
-                    self.rounds += 1
-                    self.answer = {k:[-1] for k in out_keys}
-                    print('return 3')
-                    return False
+                    if len(self.component['connections'][self.ix])>0:
+                        self.answer = {k:[msg, self.ix] for k in out_keys}
+                        self.rounds += 1
+                        return False
 
+                if self.component['part'] == 1:
+                    for k,m in messages.items():
+                        if m != [-1]:
+                            if m[0] == 'convergecast':
+                                if self.cache['MWOE'][0]>m[2]:
+                                    self.cache['MWOE'] = [m[2], m[1]]
+                                self.cache['unseen_neighbors'].pop(self.cache['unseen_neighbors'].index(m[1]))
+                    if (len(self.cache['unseen_neighbors']) == 0 and 
+                        self.level > 1):
+                        self.component['part'] = 2
+                        self.answer = {k :(
+                                    ['elect new leader',
+                                        self.cache['MWOE'][1],
+                                        self.cache['MWOE'][0],
+                                        ]) if k in self.component['connections'][self.ix] 
+                                        else [-1] for k in out_keys}
+                        try:
+                            del self.answer[self.ix]
+                        except:
+                            pass
+                        if len(self.component['connections'][self.ix])>1:
+                            print('return 2')
+                            return False
+                        self.rounds += 1
+                        return False
+
+            #DEBUGprint('arrived here')
             # Compute the neighbors from our component, and default fill 
             # the message for those that are not as null
-            neighbors_in_component = [k for k in out_keys if k in self.component['members']]
+            neighbors_in_component = [k for k in out_keys if k in self.component['connections'][self.ix]]
             for k in out_keys:
                 if k not in neighbors_in_component:
                     self.answer[k] = [-1] 
@@ -292,87 +293,122 @@ class IndividualState():
                     elif v[0]=='elect a new leader':
                         new_leader_requests.append(v[1:])                           
             
-            if not_electing_leader:
+            # If there is some search active, propagate it
+            # to inactive nodes of the component
+            if len(search_requesters) >= 1 and len(new_leader_requests)==0:
+                for k in neighbors_in_component:
+                    if messages[k] == [-1]:
+                        self.answer[k] = ['search', self.ix]
 
-                # If there is some search active, propagate it
-                # to inactive nodes of the component
-                if len(search_requesters) >= 1 and len(new_leader_requests)==0:
-                    for k in neighbors_in_component:
-                        if messages[k] == [-1]:
-                            self.answer[k] = ['search', self.ix]
+            # If we recieved convergecast requests,
+            # or we have no new neighbors in out
+            # component to forward a search message
+            # to, it is required to compute our MWOE
+            if (((len(convergecast_requesters)>0 or  
+                (len(search_requesters)==len(neighbors_in_component)))
+                and len(new_leader_requests)==0) or (self.leader and self.level==1)):
+                # Compute the MWOE
+                potential_MWOEs = [(weights[k],k) for k in out_keys if k not in self.component['connections'][self.ix]]
+                if len(potential_MWOEs) > 0:
+                    MWOE, MWOE_ix = zip(*potential_MWOEs)
+                    MWOE_ix = MWOE_ix[np.argmin(MWOE)]
+                    MWOE = min(MWOE)
+                    MWOE_found = True
+                else:
+                    MWOE_found = False
+                if len(convergecast_requesters)>0:
+                    indexes, values = zip(*convergecast_requesters)
+                    min_ix =  indexes[np.argmin(values)]
+                    min_value = min(values)
+                else:
+                    min_value = np.inf
+                    min_ix = np.inf
+                if MWOE_found:
+                    if MWOE < min_value:
+                        min_value = MWOE
+                        min_ix = self.ix
+                for k in neighbors_in_component:
+                    if k not in convergecast_requesters:
+                        self.answer[k] = ['convergecast', min_value, min_ix]
+            
+            if len(new_leader_requests)>0 and (self.ix != new_leader_requests[0][0]):
+                # Broadcast the info
+                for k in neighbors_in_component:
+                    if k in new_leader_requests:
+                        self.answer[k] = [-1]
+                    else:
+                        self.answer[k] = ['elect a new leader', *new_leader_requests[0]]
+            elif len(new_leader_requests)>0 or (self.leader):
+                # Get the UID of the P on the other side of the edge
+                UIDs = [P.u for P in kwargs['Simulation'].States]
+                auxiliary = kwargs['Simulation'].graph.am[self.ix,:]
+                if self.leader:
+                    ixj = np.argmax(np.where(auxiliary == self.cache['MWOE'][0], 1, 0))
+                else:
+                    ixj = np.argmax(np.where(auxiliary == new_leader_requests[0][1], 1, 0))
+                if UIDs[ixj] > self.u:
+                    new_leader = UIDs[ixj]
+                else:
+                    new_leader = self.u
+                # Compute the new component
+                all_the_info = self.component['new_connections'].copy()
+                for k,v in self.component['connections'].items():
+                    all_the_info[k] = all_the_info.get(k,[]) + v
+                msg = ['private leader choosing', new_leader, all_the_info]
+                self.answer = {k:msg if k==ixj else [-1] for k in out_keys}
 
-                # If we recieved convergecast requests,
-                # or we have no new neighbors in out
-                # component to forward a search message
-                # to, it is required to compute our MWOE
-                if ((len(convergecast_requesters)>0 or  
-                    (len(search_requesters)==len(neighbors_in_component)))
-                    and len(new_leader_requests)==0):
-                    # Compute the MWOE
-                    potential_MWOEs = [(weights[k],k) for k in out_keys if k not in self.component['members']]
-                    if len(potential_MWOEs) > 0:
-                        MWOE, MWOE_ix = zip(*potential_MWOEs)
-                        MWOE_ix = MWOE_ix[np.argmin(MWOE)]
-                        MWOE = min(MWOE)
-                        MWOE_found = True
-                    else:
-                        MWOE_found = False
-                    if len(convergecast_requesters)>0:
-                        indexes, values = zip(*convergecast_requesters)
-                        min_ix =  indexes[np.argmin(values)]
-                        min_value = min(values)
-                    else:
-                        min_value = np.inf
-                        min_ix = np.inf
-                    if MWOE_found:
-                        if MWOE < min_value:
-                            min_value = MWOE
-                            min_ix = self.ix
-                    for k in neighbors_in_component:
-                        if k not in convergecast_requesters:
-                            self.answer[k] = ['convergecast', min_value, min_ix]
-                
-                if len(new_leader_requests)>0 and (self.ix != new_leader_requests[0][0]):
-                    # Broadcast the info
-                    for k in neighbors_in_component:
-                        if k in new_leader_requests:
-                            self.answer[k] = [-1]
-                        else:
-                            self.answer[k] = ['elect a new leader', *new_leader_requests[0]]
-                elif len(new_leader_requests)>0 or (self.leader):
-                    # Get the UID of the P on the other side of the edge
-                    UIDs = [P.u for P in kwargs['Simulation'].States]
-                    auxiliary = kwargs['Simulation'].graph.am[self.ix,:]
-                    if self.leader:
-                        ixj = np.argmax(np.where(auxiliary == self.cache['MWOE'][0], 1, 0))
-                    else:
-                        ixj = np.argmax(np.where(auxiliary == new_leader_requests[0][1], 1, 0))
-                    if UIDs[ixj] > self.u:
-                        new_leader = UIDs[ixj]
-                    else:
-                        new_leader = self.u
-                    # Compute the new component
-                    msg = ['private leader choosing', new_leader, self.component['members']]
-                    self.answer = {k:msg if k==ixj else [-1] for k in out_keys}
+            if not not_electing_leader:
+                total_new_comp = {}
+                new_leader = False
 
-            else:
-                self.answer = {}
+                # cover requests
                 if 'private leader choosing' in [v[0] for v in messages.values()]:
                     msg = 'private leader choosing'
-                else:
+                    new_leaders, new_component_connections_ = zip(*
+                        [v[1:] for v in messages.values() if v[0]==msg]
+                    )
+                    new_leader = max([max(new_leaders), self.u])
+                    for d in new_component_connections_:
+                        for k,v in d.items():
+                            total_new_comp[k] = total_new_comp.get(k,[]) + v
+
+                # relay forwards
+                if 'the new leader is' in [v[0] for v in messages.values()]:
                     msg = 'the new leader is'
-                new_leader, new_component_members = (
-                    [v for v in messages.values() if v[0]==msg][0][1:]
-                )
+                    new_leaders, new_component_connections_ = zip(*
+                        [v[1:] for v in messages.values() if v[0]==msg]
+                    )
+                    if new_leader:
+                        new_leader = max([max([max(new_leaders), self.u]),
+                                        new_leader])
+                    else:
+                        new_leader = max([max(new_leaders), self.u])
+                    for d in new_component_connections_:
+                        for k,v in d.items():
+                            total_new_comp[k] = total_new_comp.get(k,[]) + v
+
                 self.component['leader'] = new_leader 
-                self.component['new_members'] = list(set(new_component_members + self.component['members']))
-                if new_leader != self.u:
-                    self.leader = False
-                else:
-                    self.leader = True
+                for k,v in total_new_comp.items():
+                    self.component['new_connections'][k] = self.component['new_connections'].get(k,[]) + v
+                for k,v in self.component['connections'].items():
+                    self.component['new_connections'][k] = self.component['new_connections'].get(k,[]) + v
+
                 for k in out_keys:
-                    if k in self.component['members'] and messages[k]==[-1]:
-                        self.answer[k] = [msg, new_leader, self.component['new_members']]
+                    if k in self.component['connections'][self.ix]:
+                        if messages[k][0] == 'the new leader is':
+                            self.answer[k] = [-1]
+                        elif messages[k][0] == 'private leader choosing':
+                            if (messages[k][1]==self.component['leader'] and 
+                            messages[k][2]==self.component['new_connections']):
+                                self.answer[k] = [-1]
+                            else:
+                                self.answer[k] = ['private leader choosing',
+                                                 self.component['leader'],
+                                                  self.component['new_connections']]
+                        else:
+                            self.answer[k] = ['the new leader is',
+                                                self.component['leader'], 
+                                                self.component['new_connections']]
                     else:
                         self.answer[k] = [-1]
 
@@ -387,19 +423,28 @@ class IndividualState():
 
             # Jump to the next level
             N = len(kwargs['Simulation'].States)
-            if self.rounds == 5000*N+10:
+            #DEBUG print(self.rounds)
+            if self.rounds == 20:
                 self.level += 1
                 self.rounds = 1
-                self.component['members'] = self.component['new_members'].copy()
-                self.component['new_members'] = []
+                if self.u==self.component['leader']:
+                    self.leader = True
+                else:
+                    self.leader = False
+                for k,v in self.component['new_connections'].items():
+                    self.component['connections'][k] = (
+                                    self.component['connections'].get(k, []) +
+                                    v)
+                self.component['new_connections'] = {}
                 #if VERBOSE or True:
-                print(f'level {self.level}')
-                print(self.component)
+                #print(f'level {self.level}')
+                #print(self.component)
                 #sys.exit(1)
 
             # Halt the Simulation if the MST has been built
-            if len(list(set(self.component['members'])))==N:
-                print('return 4')
+            if len(list(self.component['connections'].keys()))==N:
+                #DEBUG print('return 4')'
+                print(self.component['connections'])
                 return True
 
             return False

@@ -29,3 +29,10 @@ def sub_iteration(Simulation, i, VERBOSE = False, **kwargs):
         Simulation.FutureMessageLog[i][k] = Simulation.States[i].answer[k].copy()     
     if VERBOSE: 
         print(f'The future message log has  been updates: {Simulation.FutureMessageLog}')
+    # DEBUG
+    #print('\n')
+    #print(Simulation.States[i].answer)
+    #print(i)
+    #print(Simulation.States[i].rounds)
+    # DEBUG
+    

@@ -65,6 +65,12 @@ class Simulation():
             sub_iteration(self, i, VERBOSE = VERBOSE)
             if VERBOSE: 
                 print(f'it {i}, halting state is {self.GLOBAL_HALTING_STATE}')
+
+            # DEBUG
+            #print(self.States[i].component)
+            # DEBUG
+
+        
         if VERBOSE: 
             print('\n\n')
         self.time += 1
@@ -76,7 +82,16 @@ class Simulation():
         if VERBOSE: 
             print('starting simulation')
             counter = 0
+        counter=0
         while True:
+
+            # DEBUG
+            #counter += 1
+            #print('\n\n')
+            #if counter == 8: 
+            #    sys.exit(1)
+            # DEBUG
+
             if True:
 #            try:
                 self.Iterate(VERBOSE = VERBOSE)

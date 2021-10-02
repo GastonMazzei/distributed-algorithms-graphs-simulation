@@ -22,6 +22,9 @@ def main(N, p, VERBOSE = False):
             print('Script Failed')
             return (0,0,0,0,False)
     if VERBOSE: S.graph.view()
+    # DEBUG
+    S.graph.view()
+    # DEBUG
     params = {'diam' :  S.diam, 'type_of_state' : "SynchGHS"}
     S.InitializeProcessors(**params)   
     S.PerformSimulation(VERBOSE = VERBOSE)
@@ -30,8 +33,8 @@ def main(N, p, VERBOSE = False):
 if __name__=='__main__':
     VERBOSE = [False, True][0]
     results = {'N':[], 'P':[], 'T':[], 'C':[], 'E':[], 'D':[]}
-    for p in [0.75]:
-        for N in [5]:
+    for p in [0.99]:
+        for N in [4]:
             T_loc, C_loc, E_loc, D_loc, b = main(N,p, VERBOSE = VERBOSE)
             if b:
                 results['N'].append(N)

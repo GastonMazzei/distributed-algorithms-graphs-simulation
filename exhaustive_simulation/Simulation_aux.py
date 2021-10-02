@@ -26,7 +26,7 @@ def sub_iteration(Simulation, i, VERBOSE = False, **kwargs):
             ) or  Simulation.GLOBAL_HALTING_STATE
     )
     for k in out_indexes:    
-        Simulation.FutureMessageLog[i][k] = Simulation.States[i].answer[k].copy()     
+        Simulation.FutureMessageLog[i][k] = Simulation.States[i].answer.get(k,[-1]).copy()     
     if VERBOSE: 
         print(f'The future message log has  been updates: {Simulation.FutureMessageLog}')
     # DEBUG

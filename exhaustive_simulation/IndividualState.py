@@ -246,9 +246,10 @@ class IndividualState():
                     for k,m in messages.items():
                         if m != [-1]:
                             if m[0] == 'convergecast':
-                                if self.cache['MWOE'][0]>m[2]:
-                                    self.cache['MWOE'] = [m[2], m[1]]
-                                self.cache['unseen_neighbors'].pop(self.cache['unseen_neighbors'].index(m[1]))
+                                if self.cache['MWOE'][0]>m[1]:
+                                    self.cache['MWOE'] = [m[1], m[2]]
+                                if m[2] in self.cache['unseen_neighbors']:
+                                    self.cache['unseen_neighbors'].pop(self.cache['unseen_neighbors'].index(m[2]))
                     if (len(self.cache['unseen_neighbors']) == 0 and 
                         self.level > 1):
                         self.component['part'] = 2
@@ -317,7 +318,8 @@ class IndividualState():
                 else:
                     MWOE_found = False
                 if len(convergecast_requesters)>0:
-                    indexes, values = zip(*convergecast_requesters)
+                    #indexes, values = zip(*convergecast_requesters)
+                    values, indexes = zip(*convergecast_requesters)
                     min_ix =  indexes[np.argmin(values)]
                     min_value = min(values)
                 else:
@@ -327,10 +329,10 @@ class IndividualState():
                     if MWOE < min_value:
                         min_value = MWOE
                         min_ix = self.ix
+                local_aux = [c[1] for c in convergecast_requesters]
                 for k in neighbors_in_component:
-                    if k not in convergecast_requesters:
+                    if k not in local_aux:
                         self.answer[k] = ['convergecast', min_value, min_ix]
-            
             if len(new_leader_requests)>0 and (self.ix != new_leader_requests[0][0]):
                 # Broadcast the info
                 for k in neighbors_in_component:
@@ -354,6 +356,10 @@ class IndividualState():
                 all_the_info = self.component['new_connections'].copy()
                 for k,v in self.component['connections'].items():
                     all_the_info[k] = all_the_info.get(k,[]) + v
+                for k,v in all_the_info.items():
+                    all_the_info[k] = list(set(v))
+                # include our connection to the new leader!
+                all_the_info[self.ix] = [x for x in self.component['connections'][self.ix]] + [ixj]
                 msg = ['private leader choosing', new_leader, all_the_info]
                 self.answer = {k:msg if k==ixj else [-1] for k in out_keys}
 
@@ -392,7 +398,8 @@ class IndividualState():
                     self.component['new_connections'][k] = self.component['new_connections'].get(k,[]) + v
                 for k,v in self.component['connections'].items():
                     self.component['new_connections'][k] = self.component['new_connections'].get(k,[]) + v
-
+                for k,v in self.component['new_connections'].items():
+                    self.component['new_connections'][k] = list(set(v))
                 for k in out_keys:
                     if k in self.component['connections'][self.ix]:
                         if messages[k][0] == 'the new leader is':
@@ -424,7 +431,7 @@ class IndividualState():
             # Jump to the next level
             N = len(kwargs['Simulation'].States)
             #DEBUG print(self.rounds)
-            if self.rounds == 20:
+            if self.rounds == 4:
                 self.level += 1
                 self.rounds = 1
                 if self.u==self.component['leader']:
@@ -435,16 +442,17 @@ class IndividualState():
                     self.component['connections'][k] = (
                                     self.component['connections'].get(k, []) +
                                     v)
+                for k,v in self.component['connections'].items():
+                    self.component['connections'][k] = list(set(v))
+                for k,v in self.component['connections'].items():
+                    for v_i in v:
+                        self.component['connections'][v_i] = list(set((
+                            self.component['connections'].get(v_i,[]) + [k]
+                            )))
                 self.component['new_connections'] = {}
-                #if VERBOSE or True:
-                #print(f'level {self.level}')
-                #print(self.component)
-                #sys.exit(1)
 
             # Halt the Simulation if the MST has been built
-            if len(list(self.component['connections'].keys()))==N:
-                #DEBUG print('return 4')'
-                print(self.component['connections'])
+            if len(list(self.component['connections'].keys()))==N or self.level>N+2:
                 return True
 
             return False

@@ -64,13 +64,7 @@ class Simulation():
         for i in range(self.graph.N):
             sub_iteration(self, i, VERBOSE = VERBOSE)
             if VERBOSE: 
-                print(f'it {i}, halting state is {self.GLOBAL_HALTING_STATE}')
-
-            # DEBUG
-            #print(self.States[i].component)
-            # DEBUG
-
-        
+                print(f'it {i}, halting state is {self.GLOBAL_HALTING_STATE}')     
         if VERBOSE: 
             print('\n\n')
         self.time += 1
@@ -92,13 +86,13 @@ class Simulation():
             #    sys.exit(1)
             # DEBUG
 
-            if True:
-#            try:
+#            if True:
+            try:
                 self.Iterate(VERBOSE = VERBOSE)
-#            except:
+            except:
                 if VERBOSE:
                     print('break')
-#                break
+                break
             if VERBOSE and counter % 5 == 0: 
                 print(f'iteration #{counter}')
                 counter += 1

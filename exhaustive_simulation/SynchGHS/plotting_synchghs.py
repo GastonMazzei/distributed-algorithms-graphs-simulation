@@ -6,7 +6,7 @@ import numpy as np, matplotlib.pyplot as plt
 if __name__=='__main__':
 
     # Open
-    with open('exhaustive_simulation/SynchBFS/results-synchbfs.pkl', 'rb') as f:
+    with open('exhaustive_simulation/SynchGHS/results-synchghs.pkl', 'rb') as f:
         results = pickle.load(f)
 
     # Prepare two axis
@@ -15,7 +15,7 @@ if __name__=='__main__':
     ax1.plot(results['N'], results['C'],label='Messages', c='k',lw=4,alpha=0.7, ls=':')
     ax1.plot(results['N'], results['E'],label='Edges', c='r',lw=4,alpha=0.7, ls='-')
     ax1.grid(color='gray')
-    ax1.set_title('SynchBFS over Erdos Renyi')
+    ax1.set_title('SynchGHS over Erdos Renyi')
     ax1.set_ylim(0, max([max(results['C']),max(results['E'])])*1.1)
     TWIN = [False, True][1]
     if TWIN:

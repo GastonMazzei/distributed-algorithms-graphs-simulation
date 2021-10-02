@@ -40,6 +40,17 @@ class IndividualState():
             self.dist = np.inf
             self.rounds = 0
             self.msg = -1
+        if type_of_state == "SynchGHS":
+            self.level = 1
+            self.ix = None
+            self.component = None
+            self.rounds = 1
+            self.answer = {}
+            self.cache = []
+            self.exchange = False
+            self.forward_MWOE = True
+            self.leader = True
+            self.inactive_rounds = 0            
 
     def transition(self, 
                 keys = [],
@@ -74,6 +85,7 @@ class IndividualState():
                 if kwargs.get('VERBOSE',False):
                     print(f'answer is {self.answer}')
                 communication_complexity[0] += len(keys)
+                
                 return False
             elif self.rounds == LIMIT:
                 communication_complexity[0] += len(keys)
@@ -178,29 +190,6 @@ class IndividualState():
 #            return len(parental_status) == len([p for p in parental_status if p != None])
 
         if self.type == 'SynchGHS':
-            # IMPORTANT: for a weighted UNDIRECTED graph
-            #
-            # we start with k = 1 so our N-nodes graph is split into components
-            # that have only k = 1 nodes. Therefore, we start with all the nodes 
-            # disconnected.
-            #
-            # In general, the procedure will run in levels. For each level, 
-            # a fixed number of rounds will occur. This is O(n).
-            #
-            # here list stuff we require:
-            #   METHODS
-            #       - self.level = 1
-            #       - self.ix = None
-            #       - self.component = None
-            #       - self.rounds = 1
-            #       - self.answer = {}
-            #       - self.cache = []
-            #       - self.exchange = False
-            #       - self.forward_MWOE = True
-            #       - self.leader = True
-            #       - self.inactive_rounds = 0
-            #   KWARGS
-            #       -kwargs['Simulation']
             # Clean the answers as we will build it iteratively, i.e. 
             # as opposed to overwritting it at once.
             self.answer = {}
@@ -222,6 +211,7 @@ class IndividualState():
                 # dont know the parameters we use a
                 # different termination mechanism
                 self.component['terminate'] = False
+            
             # Glossary of messages:
             #       [-1] : empty message
             #       ['search', int_ix] : a search message with the element's index
@@ -240,12 +230,13 @@ class IndividualState():
                         MWOE_ix = MWOE_ix[np.argmin(MWOE)]
                         MWOE = min(MWOE)
                     msg = 'search'
-                    self.answer = {k:[msg, ix] for k in out_keys}
+                    self.answer = {k:[msg, self.ix] for k in out_keys}
                     self.cache = {
                         'MWOE': [MWOE, MWOE_ix], 
                         'unseen_neighbors':[k for k in out_keys if k in self.component['members']],
                     }
                     self.rounds += 1
+                    print('return 1')
                     return False
                 # Else the leader is an active member of the level 
                 elif self.component['part'] == 1:
@@ -257,14 +248,24 @@ class IndividualState():
                                         self.cache['MWOE'] = [m[2], m[1]]
                                     self.cache['unseen_neighbors'].pop(self.cache['unseen_neighbors'].index(m[1]))
                         if len(self.cache['unseen_neighbors']) == 0:
-                            self.component['part'] == 2:
-                            self.answer = {k:['elect new leader', self.cache['MWOE'][1], self.cache['MWOE'][0]] if k in self.component['members'] else k:[-1] for k in out_keys}
-                            del self.answer[self.ix]
+                            self.component['part'] = 2
+                            self.answer = {k :(
+                                        ['elect new leader',
+                                         self.cache['MWOE'][1],
+                                          self.cache['MWOE'][0],
+                                          ]) if k in self.component['members'] 
+                                            else [-1] for k in out_keys}
+                            try:
+                                del self.answer[self.ix]
+                            except:
+                                pass
                             if len(self.component['members'])>1:
+                                print('return 2')
                                 return False
                 if self.component['part'] == 1:
                     self.rounds += 1
                     self.answer = {k:[-1] for k in out_keys}
+                    print('return 3')
                     return False
 
             # Compute the neighbors from our component, and default fill 
@@ -282,7 +283,7 @@ class IndividualState():
             for k,v in messages.items():
                 if v != [-1]:
                     if v[0] in ['private leader choosing','the new leader is']:
-                        not_eleting_leader = False
+                        not_electing_leader = False
                         break
                     elif v[0]=='search':
                         search_requesters.append(v[-1:])
@@ -291,7 +292,7 @@ class IndividualState():
                     elif v[0]=='elect a new leader':
                         new_leader_requests.append(v[1:])                           
             
-            if not_eleting_leader:
+            if not_electing_leader:
 
                 # If there is some search active, propagate it
                 # to inactive nodes of the component
@@ -316,9 +317,13 @@ class IndividualState():
                         MWOE_found = True
                     else:
                         MWOE_found = False
-                    indexes, values = zip(*convergecast_requesters)
-                    min_ix =  indexes[np.argmin(values)]
-                    min_value = min(values)
+                    if len(convergecast_requesters)>0:
+                        indexes, values = zip(*convergecast_requesters)
+                        min_ix =  indexes[np.argmin(values)]
+                        min_value = min(values)
+                    else:
+                        min_value = np.inf
+                        min_ix = np.inf
                     if MWOE_found:
                         if MWOE < min_value:
                             min_value = MWOE
@@ -337,14 +342,18 @@ class IndividualState():
                 elif len(new_leader_requests)>0 or (self.leader):
                     # Get the UID of the P on the other side of the edge
                     UIDs = [P.u for P in kwargs['Simulation'].States]
-                    ixj = np.argmax(np.where(kwargs['Simulation'].graph.am[self.ix,:]==new_leader_requests[0][1], 1, 0))
+                    auxiliary = kwargs['Simulation'].graph.am[self.ix,:]
+                    if self.leader:
+                        ixj = np.argmax(np.where(auxiliary == self.cache['MWOE'][0], 1, 0))
+                    else:
+                        ixj = np.argmax(np.where(auxiliary == new_leader_requests[0][1], 1, 0))
                     if UIDs[ixj] > self.u:
-                        new_leader = UIDs[ixsj]
+                        new_leader = UIDs[ixj]
                     else:
                         new_leader = self.u
                     # Compute the new component
                     msg = ['private leader choosing', new_leader, self.component['members']]
-                    self.answer = {k:msg if k==ixj else k:[-1] for k in out_keys}
+                    self.answer = {k:msg if k==ixj else [-1] for k in out_keys}
 
             else:
                 self.answer = {}
@@ -353,12 +362,14 @@ class IndividualState():
                 else:
                     msg = 'the new leader is'
                 new_leader, new_component_members = (
-                    [v for v in messages.values() if v[0]=='private leader choosing'][1:]
+                    [v for v in messages.values() if v[0]==msg][0][1:]
                 )
                 self.component['leader'] = new_leader 
                 self.component['new_members'] = list(set(new_component_members + self.component['members']))
                 if new_leader != self.u:
                     self.leader = False
+                else:
+                    self.leader = True
                 for k in out_keys:
                     if k in self.component['members'] and messages[k]==[-1]:
                         self.answer[k] = [msg, new_leader, self.component['new_members']]
@@ -373,15 +384,24 @@ class IndividualState():
                 if len([v for v in messages.values() if v != [-1]])==0:
                     self.inactive_rounds += 1
 
-            # Should we move to the next level? if so, mark it.
-            if self.inactive_rounds > 2**self.level:
+
+            # Jump to the next level
+            N = len(kwargs['Simulation'].States)
+            if self.rounds == 5000*N+10:
                 self.level += 1
                 self.rounds = 1
+                self.component['members'] = self.component['new_members'].copy()
+                self.component['new_members'] = []
+                #if VERBOSE or True:
+                print(f'level {self.level}')
+                print(self.component)
+                #sys.exit(1)
 
             # Halt the Simulation if the MST has been built
-            N = len(kwargs['Simulation'].States)
             if len(list(set(self.component['members'])))==N:
+                print('return 4')
                 return True
+
             return False
 
 

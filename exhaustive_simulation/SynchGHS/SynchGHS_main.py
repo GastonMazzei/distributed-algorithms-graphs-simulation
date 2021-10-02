@@ -8,7 +8,8 @@ import sys, os, pickle
 from exhaustive_simulation.Simulation import Simulation
 
 def main(N, p, VERBOSE = False):
-    S = Simulation(N, p)
+    S = Simulation(N, p, is_it_weighted=True)
+    S.graph.make_undirected()
     if VERBOSE: 
         print(f'there are {S.E} edges, and the diameter is {S.diam}')
         print(f'{S.i_}, {S.TOL}')
@@ -21,7 +22,7 @@ def main(N, p, VERBOSE = False):
             print('Script Failed')
             return (0,0,0,0,False)
     if VERBOSE: S.graph.view()
-    params = {'diam' :  S.diam, 'type_of_state' : "SynchBFS", 'i0': 0}
+    params = {'diam' :  S.diam, 'type_of_state' : "SynchGHS"}
     S.InitializeProcessors(**params)   
     S.PerformSimulation(VERBOSE = VERBOSE)
     return (S.time, S.coms[0], S.E, S.diam, True)
@@ -29,8 +30,8 @@ def main(N, p, VERBOSE = False):
 if __name__=='__main__':
     VERBOSE = [False, True][0]
     results = {'N':[], 'P':[], 'T':[], 'C':[], 'E':[], 'D':[]}
-    for p in [0.1]:
-        for N in [5,10,15,20,25,30,40,50,75,100,150,200,250, 300, 350, 400]:
+    for p in [0.75]:
+        for N in [5]:
             T_loc, C_loc, E_loc, D_loc, b = main(N,p, VERBOSE = VERBOSE)
             if b:
                 results['N'].append(N)
@@ -41,12 +42,12 @@ if __name__=='__main__':
                 results['D'] += [D_loc].copy()
 
     try:
-        with open('exhaustive_simulation/SynchBFS/results-synchbfs.pkl', 'rb') as f:
+        with open('exhaustive_simulation/SynchGHS/results-synchghs.pkl', 'rb') as f:
             previous_data = pickle.load(f)
     except:
         previous_data = {}
 
-    with open('exhaustive_simulation/SynchBFS/results-synchbfs.pkl', 'wb') as f:
+    with open('exhaustive_simulation/SynchGHS/results-synchghs.pkl', 'wb') as f:
         pickle.dump({**results, **previous_data}, f)        
 
     LOW_QUALITY_PLOT = False

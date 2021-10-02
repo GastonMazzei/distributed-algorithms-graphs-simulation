@@ -77,13 +77,13 @@ class Simulation():
             print('starting simulation')
             counter = 0
         while True:
-#            if True:
-            try:
+            if True:
+#            try:
                 self.Iterate(VERBOSE = VERBOSE)
-            except:
+#            except:
                 if VERBOSE:
                     print('break')
-                break
+#                break
             if VERBOSE and counter % 5 == 0: 
                 print(f'iteration #{counter}')
                 counter += 1

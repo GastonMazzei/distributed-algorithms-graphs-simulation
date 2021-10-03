@@ -56,7 +56,10 @@ def show_graph_(Graph, layout_n=3):
     if Graph.tree_status:
 
         # Get the adjcancency matrix from the Graph's tree
-        A = tree_to_adjcacency_matrix(Graph.tree)
+        if Graph.is_tree_adjacency:
+            A = Graph.tree
+        else:
+            A = tree_to_adjcacency_matrix(Graph.tree)
         if DEBUG: print(f'A tree was made and it was this: {A}')
         # Create DiGraph from A
         G = nx.from_numpy_matrix(A, create_using=nx.DiGraph)
@@ -75,7 +78,8 @@ def show_graph_(Graph, layout_n=3):
                     node_color=color_map,
                     ax=ax[1]
                     )
-        ax[1].set_title(f'Associated Tree beggining in node {Graph.i0}')
+        ax[1].set_title((f'Associated Tree beggining in node {Graph.i0}' if Graph.i0 != None 
+			else "MST  Tree"))
 
 
     # Show plot

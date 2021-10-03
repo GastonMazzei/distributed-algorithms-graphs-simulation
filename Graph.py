@@ -28,6 +28,7 @@ class Graph():
         self.tree = None
         self.tree_status = False
         self.tree_depth = 0
+        self.is_tree_adjacency = False
         self.undirected = False
 
     def make_undirected(self):

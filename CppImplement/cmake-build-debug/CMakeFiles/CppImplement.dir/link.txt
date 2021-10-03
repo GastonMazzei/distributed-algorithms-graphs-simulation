@@ -1,0 +1,1 @@
+/usr/bin/c++ -g CMakeFiles/CppImplement.dir/main.cpp.o CMakeFiles/CppImplement.dir/Graph.cpp.o CMakeFiles/CppImplement.dir/Aux.cpp.o -o CppImplement 

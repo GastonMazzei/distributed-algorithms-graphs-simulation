@@ -1,0 +1,24 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/m4zz31/Documents/z0_github/distributed-algorithms-graphs/CppImplement/Aux.h
+vector
+-
+
+/home/m4zz31/Documents/z0_github/distributed-algorithms-graphs/CppImplement/Graph.h
+vector
+-
+
+/home/m4zz31/Documents/z0_github/distributed-algorithms-graphs/CppImplement/main.cpp
+Graph.h
+/home/m4zz31/Documents/z0_github/distributed-algorithms-graphs/CppImplement/Graph.h
+Aux.h
+/home/m4zz31/Documents/z0_github/distributed-algorithms-graphs/CppImplement/Aux.h
+vector
+-
+

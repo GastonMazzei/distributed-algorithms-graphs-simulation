@@ -51,7 +51,7 @@ class IndividualState():
             self.forward_MWOE = True
             self.leader = True
             self.inactive_rounds = 0
-            a,b = 3,5     
+            a,b = 5,5    
             self.roundmax = a * kwargs['N'] + b       
             self.N = kwargs['N']
 
@@ -244,6 +244,7 @@ class IndividualState():
                         self.answer = {k:[msg, self.ix] for k in out_keys}
                         self.rounds += 1
                         communication_complexity[0] += len([v for v in  self.answer if v != [-1]])
+                        #print('return 0')
                         return False
 
                 if self.component['part'] == 1:
@@ -282,6 +283,7 @@ class IndividualState():
                             #print('return 2')
                             communication_complexity[0] += len([v for v in  self.answer if v != [-1]])
                             self.rounds += 1
+                            #print('return 1')
                             return False
 
             #DEBUGprint('arrived here')
@@ -301,7 +303,7 @@ class IndividualState():
                 if v != [-1]:
                     if v[0] in ['private leader choosing','the new leader is']:
                         not_electing_leader = False
-                        break
+                        #break
                     elif v[0]=='search':
                         search_requesters.append(v[-1:])
                     elif v[0]=='convergecast':
@@ -321,8 +323,8 @@ class IndividualState():
             # component to forward a search message
             # to, it is required to compute our MWOE
             if (((len(convergecast_requesters)>0 or  
-                (len(search_requesters)==len(neighbors_in_component)))
-                and len(new_leader_requests)==0) or (self.leader and self.level==1)):
+                (len(search_requesters)==len(neighbors_in_component))) #            __new__constraint__
+                and len(new_leader_requests)==0)):
                 # Compute the MWOE
                 potential_MWOEs = [(weights[k],k) for k in out_keys if k not in self.component['connections'][self.ix]]
                 if len(potential_MWOEs) > 0:
@@ -344,18 +346,20 @@ class IndividualState():
                     if MWOE < min_value:
                         min_value = MWOE
                         min_ix = self.ix
-                local_aux = [c[1] for c in convergecast_requesters]
+                local_aux = [c[2] for c in convergecast_requesters]
                 for k in neighbors_in_component:
                     if k not in local_aux:
                         self.answer[k] = ['convergecast', min_value, min_ix]
-            if len(new_leader_requests)>0 and (self.ix != new_leader_requests[0][0]):
+
+            # New section
+            if len(new_leader_requests)>0 and (self.ix != new_leader_requests[0][1]):
                 # Broadcast the info
                 for k in neighbors_in_component:
                     if k in new_leader_requests:
                         self.answer[k] = [-1]
                     else:
                         self.answer[k] = ['elect a new leader', *new_leader_requests[0]]
-            elif len(new_leader_requests)>0 or (self.leader):
+            elif len(new_leader_requests)>0 or  (self.leader and self.level==1 and self.rounds==1):
                 # Get the UID of the P on the other side of the edge
                 UIDs = [P.u for P in kwargs['Simulation'].States]
                 auxiliary = kwargs['Simulation'].graph.am[self.ix,:]
@@ -371,17 +375,18 @@ class IndividualState():
                 all_the_info = self.component['new_connections'].copy()
                 for k,v in self.component['connections'].items():
                     all_the_info[k] = all_the_info.get(k,[]) + v
-                for k,v in all_the_info.items():
-                    all_the_info[k] = list(set(v))
                 # include our connection to the new leader!
                 all_the_info[self.ix] = [x for x in self.component['connections'][self.ix]] + [ixj]
+                # make it symmetric
+                for k,v in all_the_info.items():
+                    all_the_info[k] = list(set(v))
                 msg = ['private leader choosing', new_leader, all_the_info]
                 self.answer = {k:msg if k==ixj else [-1] for k in out_keys}
 
             if not not_electing_leader:
+                print('electing a leader')
                 total_new_comp = {}
                 new_leader = False
-
                 # cover requests
                 if 'private leader choosing' in [v[0] for v in messages.values()]:
                     msg = 'private leader choosing'
@@ -408,6 +413,10 @@ class IndividualState():
                         for k,v in d.items():
                             total_new_comp[k] = total_new_comp.get(k,[]) + v
 
+                for k,v in messages.items():
+                    if v[0] in ['private leader choosing']:          
+                        total_new_comp[self.ix] = total_new_comp.get(self.ix,[]) + [k]
+                # Update the component and filter it
                 self.component['leader'] = new_leader 
                 for k,v in total_new_comp.items():
                     self.component['new_connections'][k] = self.component['new_connections'].get(k,[]) + v
@@ -415,8 +424,10 @@ class IndividualState():
                     self.component['new_connections'][k] = self.component['new_connections'].get(k,[]) + v
                 for k,v in self.component['new_connections'].items():
                     self.component['new_connections'][k] = list(set(v))
+                print(f'i am {self.ix} and my new components are {self.component["new_connections"]}')
+                # Build the answer message    
                 for k in out_keys:
-                    if k in self.component['connections'][self.ix]:
+                    if k in self.component['new_connections'][self.ix]:
                         if messages[k][0] == 'the new leader is':
                             self.answer[k] = [-1]
                         elif messages[k][0] == 'private leader choosing':
@@ -435,12 +446,26 @@ class IndividualState():
                         self.answer[k] = [-1]
 
             # Increase the "inactive  rounds" counter
-            if len([v for v in self.answer.values() if v != [-1]])==0:
-                if len([v for v in messages.values() if v != [-1]])==0:
-                    self.inactive_rounds += 1
+            inactive_round = True
+            for k,v in messages.items():
+                if v != [-1]:
+                    if (v[0]=='private leader choosing' or
+                        v[0]=='the new leader is'):
+                        if (v[1] != self.component['leader'] or
+                            v[2] != self.component['new_connections']):
+                            inactive_round = False
+                    else:
+                        inactive_round = False
+            if inactive_round:
+                self.inactive_rounds += 1
+            else:
+                self.inactive_rounds = 0
 
             #DEBUG print(self.rounds)
             if self.rounds >= self.roundmax:
+                kwargs['Simulation'].cache[self.u] = (
+                    kwargs['Simulation'].cache.get(self.u,[]) + [self.inactive_rounds].copy()
+                )
                 self.level += 1
                 self.rounds = 1
                 if self.u==self.component['leader']:
@@ -464,13 +489,19 @@ class IndividualState():
 
 
             # Halt the Simulation if the MST has been built
-            if len(list(self.component['connections'].keys()))==self.N or self.level>self.N+2:
+            if len(list(self.component['connections'].keys()))==self.N:# or self.level>self.N+2:
                 communication_complexity[0] += len([v for v in  self.answer if v != [-1]])
+                #print('return 2')
+                return True
+            elif self.level>int(np.log2(self.N))+1:
+                print('ERROR!')
+                print(self.component['connections'])
                 return True
 
             # Keep the show going...
             self.rounds += 1
             communication_complexity[0] += len([v for v in self.answer if v != [-1]])
+            #print('return 3')
             return False
 
 

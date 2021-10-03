@@ -30,6 +30,7 @@ class Simulation():
         self.ix = np.asarray(range(N))
         self.coms = [0]
         self.time = 0
+        self.cache = {}
         self.GLOBAL_HALTING_STATE = False
 
     def InitializeProcessors(self, **kwargs):

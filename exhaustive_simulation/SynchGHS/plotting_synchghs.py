@@ -15,17 +15,21 @@ if __name__=='__main__':
     # Prepare two axis
     fig, ax1 = plt.subplots()
 
-    ax1.plot(results['N'], results['C'],label='Messages', c='k',lw=4,alpha=0.7, ls='-')
-    ax1.plot(results['N'], results['E'],label='Edges', c='r',lw=4,alpha=0.7, ls='-')
-    ax1.plot(results['N'], results['T'],label='Time', c='b',lw=4,alpha=0.7, ls='-')
-    ax1.scatter(results['N'], results['C'], c='k',lw=4,alpha=0.7, ls='-')
-    ax1.scatter(results['N'], results['E'], c='r',lw=4,alpha=0.7, ls='-')
-    ax1.scatter(results['N'], results['T'], c='b',lw=4,alpha=0.7, ls='-')
+    if False:
+        ax1.plot(results['N'], results['C'],label='Messages', c='k',lw=4,alpha=0.7, ls='-')
+        ax1.plot(results['N'], results['E'],label='Edges', c='r',lw=4,alpha=0.7, ls='-')
+        ax1.plot(results['N'], results['T'],label='Time', c='b',lw=4,alpha=0.7, ls='-')
+        ax1.scatter(results['N'], results['C'], c='k',lw=4,alpha=0.7, ls='-')
+        ax1.scatter(results['N'], results['E'], c='r',lw=4,alpha=0.7, ls='-')
+        ax1.scatter(results['N'], results['T'], c='b',lw=4,alpha=0.7, ls='-')
 
-    ax1.grid(color='gray')
-    ax1.set_yscale('log')
-    ax1.set_title(f'SynchGHS over Erdos Renyi with p: {int(100*p)}%')
-    ax1.set_ylim(0, max(results['C']) * 1.1) #max([max(results['C']),max(results['E'])])*1.1)
+        ax1.grid(color='gray')
+        ax1.set_yscale('log')
+        ax1.set_title(f'SynchGHS over Erdos Renyi with p: {int(100*p)}%')
+        ax1.set_ylim(0, max(results['C']) * 1.1) #max([max(results['C']),max(results['E'])])*1.1)
+    else:
+        print (results['CM'])
+        ax1.plot(results['N'], results['CM'])
 
     TWIN = [False, True][0]
     if TWIN:
@@ -41,9 +45,7 @@ if __name__=='__main__':
 
     ax1.tick_params(axis='y', colors='r')
     ax1.set_ylabel('Value')
-    if False:
-        ax1.set_xscale('log')
-        ax2.set_xscale('log')
+
     plt.xlabel('Nodes')
     ax1.legend()
     #plt.yscale('log')

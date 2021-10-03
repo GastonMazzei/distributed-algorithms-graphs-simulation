@@ -30,9 +30,10 @@ def sub_iteration(Simulation, i, VERBOSE = False, **kwargs):
     if VERBOSE: 
         print(f'The future message log has  been updates: {Simulation.FutureMessageLog}')
     # DEBUG
-    #print('\n')
-    #print(Simulation.States[i].answer)
-    #print(i)
-    #print(Simulation.States[i].rounds)
+    txt = ('\n' +
+            str(Simulation.States[i].answer) + '\n' +
+            f'ix: {i}, r: {Simulation.States[i].rounds}, L: {Simulation.States[i].level}')
+    #os.system(f'echo "{txt}" >> log')
+    print(txt)
     # DEBUG
     

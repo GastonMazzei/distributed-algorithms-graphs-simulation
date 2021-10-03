@@ -52,9 +52,9 @@ if __name__=='__main__':
     VERBOSE = [False, True][0]
     mini_VERBOSE = [False, True][0]
     results = {'N':[], 'P':[], 'T':[], 'C':[], 'E':[], 'D':[], 'CM':[], 'AB':[]}
-    AB = (15,1)
-    for p in [0.3]:
-        for N in list(range(2,25))+[30,35,40,45,50,60,70,80,90,100]:
+    AB = (30,20)
+    for p in [0.7]:
+        for N in list(range(2,25))+[30,35,40,45,50]:
             T_loc, C_loc, E_loc, D_loc, CM_loc, b = main(N,p, AB, VERBOSE = VERBOSE, 
                                                       mini_VERBOSE = mini_VERBOSE)
             if b:

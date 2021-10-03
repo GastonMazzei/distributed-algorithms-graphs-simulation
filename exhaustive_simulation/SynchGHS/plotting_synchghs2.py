@@ -29,6 +29,9 @@ if __name__=='__main__':
         ax1.scatter(results['N'], results['C'], c='k',lw=4,alpha=0.7, ls='-')
         ax1.scatter(results['N'], results['E'], c='r',lw=4,alpha=0.7, ls='-')
         ax1.scatter(results['N'], results['T'], c='b',lw=4,alpha=0.7, ls='-')
+        #ax1.plot(results['N'], results['CM'],label='Time excess', c='y',lw=4,alpha=0.7, ls='-')
+        #ax1.scatter(results['N'], results['CM'], c='y',lw=4,alpha=0.7, ls='-')
+
 
         ax1.grid(color='gray')
         ax1.set_yscale('log')

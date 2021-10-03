@@ -492,10 +492,10 @@ class IndividualState():
                 kwargs['Simulation'].time += self.rounds / self.N - 1
                 return True
 
-            # elif self.level>int(np.log2(self.N))+1:
-            #     print('ERROR!')
+            elif self.level>int(np.log2(self.N))+1:
+                 print('ERROR!')
             #     print(self.component['connections'])
-            #     return True
+                 return True
 
             # Keep the show going...
             self.rounds += 1

@@ -51,7 +51,7 @@ class IndividualState():
             self.forward_MWOE = True
             self.leader = True
             self.inactive_rounds = 0
-            a,b = 15,5     
+            a,b = 3,5     
             self.roundmax = a * kwargs['N'] + b       
             self.N = kwargs['N']
 
@@ -243,7 +243,7 @@ class IndividualState():
                     if len(self.component['connections'][self.ix])>0:
                         self.answer = {k:[msg, self.ix] for k in out_keys}
                         self.rounds += 1
-                        communication_complexity[0] += len([v for v in answers if v != [-1]])
+                        communication_complexity[0] += len([v for v in  self.answer if v != [-1]])
                         return False
 
                 if self.component['part'] == 1:
@@ -267,13 +267,22 @@ class IndividualState():
                             del self.answer[self.ix]
                         except:
                             pass
+                        
+                        # OPTION 1: currently mutted
+#                        if len(self.component['connections'][self.ix])>1:
+#                            print('return 2')
+#                            communication_complexity[0] += len([v for v in  self.answer if v != [-1]])
+#                            return False
+#                        self.rounds += 1
+#                        communication_complexity[0] += len([v for v in  self.answer if v != [-1]])
+#                        return False
+
+                        # option 2: current!
                         if len(self.component['connections'][self.ix])>1:
-                            print('return 2')
-                            communication_complexity[0] += len([v for v in answers if v != [-1]])
+                            #print('return 2')
+                            communication_complexity[0] += len([v for v in  self.answer if v != [-1]])
+                            self.rounds += 1
                             return False
-                        self.rounds += 1
-                        communication_complexity[0] += len([v for v in answers if v != [-1]])
-                        return False
 
             #DEBUGprint('arrived here')
             # Compute the neighbors from our component, and default fill 
@@ -425,19 +434,13 @@ class IndividualState():
                     else:
                         self.answer[k] = [-1]
 
-            # Keep the show going...
-            self.rounds += 1
-
             # Increase the "inactive  rounds" counter
             if len([v for v in self.answer.values() if v != [-1]])==0:
                 if len([v for v in messages.values() if v != [-1]])==0:
                     self.inactive_rounds += 1
 
-
-            # Jump to the next level
-            N = len(kwargs['Simulation'].States)
             #DEBUG print(self.rounds)
-            if self.rounds == self.roundmax:
+            if self.rounds >= self.roundmax:
                 self.level += 1
                 self.rounds = 1
                 if self.u==self.component['leader']:
@@ -456,15 +459,18 @@ class IndividualState():
                             self.component['connections'].get(v_i,[]) + [k]
                             )))
                 self.component['new_connections'] = {}
-                kwargs['Simulation'].time += self.roundmax / N - 1
+                kwargs['Simulation'].time += self.roundmax / self.N - 1
+
+
 
             # Halt the Simulation if the MST has been built
-            if len(list(self.component['connections'].keys()))==N or self.level>N+2:
-                communication_complexity[0] += len([v for v in answers if v != [-1]])
+            if len(list(self.component['connections'].keys()))==self.N or self.level>self.N+2:
+                communication_complexity[0] += len([v for v in  self.answer if v != [-1]])
                 return True
 
-            communication_complexity[0] += len([v for v in answers if v != [-1]])
-            print(f'adding: {len([v for v in answers if v != [-1]])}')
+            # Keep the show going...
+            self.rounds += 1
+            communication_complexity[0] += len([v for v in self.answer if v != [-1]])
             return False
 
 

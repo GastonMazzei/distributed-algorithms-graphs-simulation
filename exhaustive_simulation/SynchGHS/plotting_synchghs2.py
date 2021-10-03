@@ -16,7 +16,13 @@ if __name__=='__main__':
     # Prepare two axis
     fig, ax1 = plt.subplots()
 
-    if False:
+    if True:
+        unwanted = []
+        for i in range(len(results['N'])):
+            if results['T'][i]<results['N'][i]:
+                unwanted.append(i)
+        for k,v in results.items():
+            results[k] = [v_ for i,v_ in enumerate(v) if i not in unwanted]
         ax1.plot(results['N'], results['C'],label='Messages', c='k',lw=4,alpha=0.7, ls='-')
         ax1.plot(results['N'], results['E'],label='Edges', c='r',lw=4,alpha=0.7, ls='-')
         ax1.plot(results['N'], results['T'],label='Time', c='b',lw=4,alpha=0.7, ls='-')
@@ -44,7 +50,7 @@ if __name__=='__main__':
         ax1.scatter(x2,y2, c='k',marker='s')
 
 
-    TWIN = [False, True][1]
+    TWIN = [False, True][0]
     if TWIN:
         ax2 = ax1.twinx()
         pol = np.polyfit(x2, np.asarray(yrounds)-np.asarray(y2),1)
@@ -59,7 +65,7 @@ if __name__=='__main__':
     ax1.tick_params(axis='y', colors='r')
     ax1.set_ylabel('Value')
 
-    ax1.set_xlabel('Nodes')
+    plt.xlabel('Nodes')
     ax1.legend()
     #plt.yscale('log')
     plt.show()

@@ -51,7 +51,7 @@ class IndividualState():
             self.forward_MWOE = True
             self.leader = True
             self.inactive_rounds = 0
-            a,b = 5,5    
+            a,b = kwargs['AB']
             self.roundmax = a * kwargs['N'] + b       
             self.N = kwargs['N']
 
@@ -235,16 +235,18 @@ class IndividualState():
                         MWOE, MWOE_ix = zip(*potential_MWOEs)
                         MWOE_ix = MWOE_ix[np.argmin(MWOE)]
                         MWOE = min(MWOE)
+                    else:
+                        MWOE = np.inf
+                        MOWE_ix = None
                     msg = 'search'
                     self.cache = {
                         'MWOE': [MWOE, MWOE_ix], 
                         'unseen_neighbors':[k for k in out_keys if k in self.component['connections'][self.ix]],
                     }
                     if len(self.component['connections'][self.ix])>0:
-                        self.answer = {k:[msg, self.ix] for k in out_keys}
+                        self.answer = {k:[msg, self.ix] if k in self.component['connections'][self.ix] else [-1] for k in out_keys}
                         self.rounds += 1
                         communication_complexity[0] += len([v for v in  self.answer if v != [-1]])
-                        #print('return 0')
                         return False
 
                 if self.component['part'] == 1:
@@ -346,7 +348,10 @@ class IndividualState():
                     if MWOE < min_value:
                         min_value = MWOE
                         min_ix = self.ix
-                local_aux = [c[2] for c in convergecast_requesters]
+                if len(convergecast_requesters)>0:
+                    local_aux = [c[2] for c in convergecast_requesters]
+                else:
+                    local_aux = []
                 for k in neighbors_in_component:
                     if k not in local_aux:
                         self.answer[k] = ['convergecast', min_value, min_ix]
@@ -384,7 +389,6 @@ class IndividualState():
                 self.answer = {k:msg if k==ixj else [-1] for k in out_keys}
 
             if not not_electing_leader:
-                print('electing a leader')
                 total_new_comp = {}
                 new_leader = False
                 # cover requests
@@ -424,7 +428,6 @@ class IndividualState():
                     self.component['new_connections'][k] = self.component['new_connections'].get(k,[]) + v
                 for k,v in self.component['new_connections'].items():
                     self.component['new_connections'][k] = list(set(v))
-                print(f'i am {self.ix} and my new components are {self.component["new_connections"]}')
                 # Build the answer message    
                 for k in out_keys:
                     if k in self.component['new_connections'][self.ix]:
@@ -454,49 +457,45 @@ class IndividualState():
                         if (v[1] != self.component['leader'] or
                             v[2] != self.component['new_connections']):
                             inactive_round = False
+ #                           print('false bcoz of A')
                     else:
                         inactive_round = False
+#                        print('false bcoz of B')
             if inactive_round:
                 self.inactive_rounds += 1
             else:
                 self.inactive_rounds = 0
 
-            #DEBUG print(self.rounds)
             if self.rounds >= self.roundmax:
                 kwargs['Simulation'].cache[self.u] = (
                     kwargs['Simulation'].cache.get(self.u,[]) + [self.inactive_rounds].copy()
                 )
                 self.level += 1
+                self.inactive_rounds = 0
                 self.rounds = 1
                 if self.u==self.component['leader']:
                     self.leader = True
                 else:
                     self.leader = False
-                for k,v in self.component['new_connections'].items():
-                    self.component['connections'][k] = (
-                                    self.component['connections'].get(k, []) +
-                                    v)
-                for k,v in self.component['connections'].items():
-                    self.component['connections'][k] = list(set(v))
-                for k,v in self.component['connections'].items():
-                    for v_i in v:
-                        self.component['connections'][v_i] = list(set((
-                            self.component['connections'].get(v_i,[]) + [k]
-                            )))
+                self.component['connections'] = self.component['new_connections'].copy()
                 self.component['new_connections'] = {}
-                kwargs['Simulation'].time += self.roundmax / self.N - 1
+                kwargs['Simulation'].time += self.rounds / self.N - 1
+                communication_complexity[0] += len([v for v in self.answer if v != [-1]])
+                return False
 
 
 
             # Halt the Simulation if the MST has been built
-            if len(list(self.component['connections'].keys()))==self.N:# or self.level>self.N+2:
+            if len(list(self.component['new_connections'].keys()))==self.N:# or self.level>self.N+2:
                 communication_complexity[0] += len([v for v in  self.answer if v != [-1]])
-                #print('return 2')
+                self.component['connections'] = self.component['new_connections'].copy()
+                kwargs['Simulation'].time += self.rounds / self.N - 1
                 return True
-            elif self.level>int(np.log2(self.N))+1:
-                print('ERROR!')
-                print(self.component['connections'])
-                return True
+
+            # elif self.level>int(np.log2(self.N))+1:
+            #     print('ERROR!')
+            #     print(self.component['connections'])
+            #     return True
 
             # Keep the show going...
             self.rounds += 1

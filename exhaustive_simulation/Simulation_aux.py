@@ -29,11 +29,7 @@ def sub_iteration(Simulation, i, VERBOSE = False, **kwargs):
         Simulation.FutureMessageLog[i][k] = Simulation.States[i].answer.get(k,[-1]).copy()     
     if VERBOSE: 
         print(f'The future message log has  been updates: {Simulation.FutureMessageLog}')
-    # DEBUG
     txt = ('\n' +
             str(Simulation.States[i].answer) + '\n' +
             f'ix: {i}, r: {Simulation.States[i].rounds}, L: {Simulation.States[i].level}')
-    #os.system(f'echo "{txt}" >> log')
-    print(txt)
-    # DEBUG
     

@@ -6,3 +6,4 @@
 rm exhaustive_simulation/SynchGHS/results-synchghs.pkl
 python3 exhaustive_simulation/SynchGHS/SynchGHS_main.py
 python3 exhaustive_simulation/SynchGHS/plotting_synchghs.py
+python3 exhaustive_simulation/SynchGHS/plotting_synchghs2.py

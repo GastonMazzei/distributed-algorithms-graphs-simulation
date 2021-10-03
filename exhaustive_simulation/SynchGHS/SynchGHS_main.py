@@ -7,7 +7,7 @@ import sys, os, pickle
 
 from exhaustive_simulation.Simulation import Simulation
 
-def main(N, p, VERBOSE = False, mini_VERBOSE = False):
+def main(N, p, AB, VERBOSE = False, mini_VERBOSE = False):
     S = Simulation(N, p, is_it_weighted=True)
     S.graph.make_undirected()
     if VERBOSE: 
@@ -22,7 +22,7 @@ def main(N, p, VERBOSE = False, mini_VERBOSE = False):
             print('Script Failed')
             return (0,0,0,0,False)
     if VERBOSE: S.graph.view()
-    params = {'diam' :  S.diam, 'type_of_state' : "SynchGHS", 'N' : N}
+    params = {'diam' :  S.diam, 'type_of_state' : "SynchGHS", 'N' : N, 'AB': AB}
     S.InitializeProcessors(**params)   
     S.PerformSimulation(VERBOSE = VERBOSE)
 
@@ -36,20 +36,26 @@ def main(N, p, VERBOSE = False, mini_VERBOSE = False):
     else:
         cont_min = 0
     if mini_VERBOSE: 
-        print(S.States[0].component['connections'])
+        #print('the connections are:')
+        #print(S.States[0].component['connections'])
+        for P in S.States:
+            if  len(P.component['connections'].keys())==N:
+                tree = P.component['connections']
+                break
         S.graph.view()
-        plt.hist(cont, bins=20);plt.show()
+        #plt.hist(cont, bins=20);plt.show()
         print(f'cont min is: {cont_min}')
 
     return (S.time, S.coms[0], S.E, S.diam, cont_min,  True)
 
 if __name__=='__main__':
     VERBOSE = [False, True][0]
-    mini_VERBOSE = [False, True][1]
-    results = {'N':[], 'P':[], 'T':[], 'C':[], 'E':[], 'D':[], 'CM':[]}
-    for p in [0.5]:
-        for N in [3,4,4,4,5,3,4]:#[2,3,4,6,8,10,15,20,25,30]:#,40,50,60,75,100]:
-            T_loc, C_loc, E_loc, D_loc, CM_loc, b = main(N,p, VERBOSE = VERBOSE, 
+    mini_VERBOSE = [False, True][0]
+    results = {'N':[], 'P':[], 'T':[], 'C':[], 'E':[], 'D':[], 'CM':[], 'AB':[]}
+    AB = (15,1)
+    for p in [0.3]:
+        for N in list(range(2,25))+[30,35,40,45,50,60,70,80,90,100]:
+            T_loc, C_loc, E_loc, D_loc, CM_loc, b = main(N,p, AB, VERBOSE = VERBOSE, 
                                                       mini_VERBOSE = mini_VERBOSE)
             if b:
                 results['N'].append(N)
@@ -59,7 +65,7 @@ if __name__=='__main__':
                 results['E'] += [E_loc].copy()
                 results['D'] += [D_loc].copy()
                 results['CM'] += [CM_loc].copy()
-
+                results['AB'] += [AB]
     try:
         with open('exhaustive_simulation/SynchGHS/results-synchghs.pkl', 'rb') as f:
             previous_data = pickle.load(f)

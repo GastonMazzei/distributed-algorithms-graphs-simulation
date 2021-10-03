@@ -23,19 +23,20 @@ def main(N, p, VERBOSE = False):
             return (0,0,0,0,False)
     if VERBOSE: S.graph.view()
     # DEBUG
-    S.graph.view()
+    # S.graph.view()
     # DEBUG
-    params = {'diam' :  S.diam, 'type_of_state' : "SynchGHS"}
+    params = {'diam' :  S.diam, 'type_of_state' : "SynchGHS", 'N' : N}
     S.InitializeProcessors(**params)   
     S.PerformSimulation(VERBOSE = VERBOSE)
+    print(S.time, S.coms[0], S.E)
     print(S.States[0].component['connections'])
     return (S.time, S.coms[0], S.E, S.diam, True)
 
 if __name__=='__main__':
     VERBOSE = [False, True][0]
     results = {'N':[], 'P':[], 'T':[], 'C':[], 'E':[], 'D':[]}
-    for p in [0.99]:
-        for N in [8]:
+    for p in [0.7]:
+        for N in [2, 4, 8]:
             T_loc, C_loc, E_loc, D_loc, b = main(N,p, VERBOSE = VERBOSE)
             if b:
                 results['N'].append(N)

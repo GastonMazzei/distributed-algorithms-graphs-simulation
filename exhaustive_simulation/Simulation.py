@@ -90,7 +90,9 @@ class Simulation():
 #            if True:
             try:
                 self.Iterate(VERBOSE = VERBOSE)
-            except:
+            except Exception as ins:
+                if ins.args[0]!='HALT':
+                    self.Iterate(VERBOSE = VERBOSE)
                 if VERBOSE:
                     print('break')
                 break

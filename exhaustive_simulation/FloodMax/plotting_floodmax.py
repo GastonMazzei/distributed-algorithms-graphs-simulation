@@ -10,8 +10,19 @@ if __name__=='__main__':
         results = pickle.load(f)
 
     # Prepare two axis
+
+
+    D = np.asarray(results['D'])
+    E = np.asarray(results['E'])
+    C = np.asarray(results['C'])
+
+    plt.plot(C, D*E);plt.show()
+
+    
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
+
+
 
     ax1.plot(results['N'], results['C'],label='Messages', c='k', ls=':')
     ax1.plot(results['N'], results['E'],label='Edges', c='k', ls='-')

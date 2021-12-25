@@ -9,10 +9,9 @@ if __name__=='__main__':
     with open('exhaustive_simulation/BellmanFord/results-bellmanford.pkl', 'rb') as f:
         results = pickle.load(f)
 
-    # Prepare two axis
+    # Prepare variables and figures
     p = str(round(results['P'][0]*100,0))
     fig, ax = plt.subplots(1,2, figsize=(15,10))
-    
     C = np.asarray(results['C'])
     E = np.asarray(results['E'])
     N = np.asarray(results['N'])
@@ -23,10 +22,9 @@ if __name__=='__main__':
     ax[0].plot(N, N, label='Nodes', c='g',lw=2,alpha=0.5, ls='dotted')
 
 
-    # Plot the relevant quotient, as the message complexity is
-    # Communication ~ Nodes * Edges
+    # Plot the relevant dependence, as the message complexity is
+    # Communication ~ Nodes * Edges (p.62 Distributed Algorithms, Nancy Lynch)
     y = (N * E)
-    print(y)
     ax[1].scatter(C, y, label=r'$Edges \times Nodes$',c='y',alpha=1)
     pol = np.polyfit(C,y,1)
     ax[1].plot(C, np.polyval(pol,C), label='linear fit',c='k',lw=3,alpha=0.6, ls=':')
@@ -37,14 +35,14 @@ if __name__=='__main__':
     ax[1].set_title(f'Verification of the communication complexity')
     ax[0].set_ylim(1, max([max(results['C']),max(results['E'])])*1.1)
     ax[0].tick_params(axis='y', colors='r')
-    ax[0].set_xlabel('Number')
-    ax[0].set_ylabel('Value (log)')
+    ax[0].set_xlabel('Number of Nodes')
+    ax[0].set_ylabel('Value (logscale)')
     ax[0].set_yscale('log')
     ax[1].set_xscale('log')
     ax[1].set_yscale('log')
     ax[1].legend()
-    ax[1].set_xlabel('Communication (log)')
-    ax[1].set_ylabel('Value (log)')
+    ax[1].set_xlabel('Communication (logscale)')
+    ax[1].set_ylabel('Value (logscale)')
     ax[0].legend()
 
     plt.show()

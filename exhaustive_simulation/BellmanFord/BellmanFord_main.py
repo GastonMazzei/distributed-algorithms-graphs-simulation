@@ -30,8 +30,8 @@ def main(N, p, VERBOSE = False):
 if __name__=='__main__':
     VERBOSE = [False, True][0]
     results = {'N':[], 'P':[], 'T':[], 'C':[], 'E':[], 'D':[]}
-    for p in [0.08]:
-        for N in [3,5,10,15,25,40,50,75,100]:
+    for p in [0.4]:
+        for N in [5,10,15,25,40,50,75,100]:
             T_loc, C_loc, E_loc, D_loc, b = main(N,p, VERBOSE = VERBOSE)
             if b:
                 results['N'].append(N)
@@ -46,6 +46,7 @@ if __name__=='__main__':
             previous_data = pickle.load(f)
     except:
         previous_data = {}
+    print(results)
 
     with open('exhaustive_simulation/BellmanFord/results-bellmanford.pkl', 'wb') as f:
         pickle.dump({**results, **previous_data}, f)        

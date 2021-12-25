@@ -30,7 +30,7 @@ if __name__=='__main__':
     VERBOSE = [False, True][0]
     results = {'N':[], 'P':[], 'T':[], 'C':[], 'E':[], 'D':[]}
     for p in [0.1]:
-        for N in [5,10,15,20,25,30,40,50,75,100,150,200,250, 300, 350, 400]:
+        for N in [5,10,15]:#,20,25,30,40,50,75,100,150,200,250, 300, 350, 400]:
             T_loc, C_loc, E_loc, D_loc, b = main(N,p, VERBOSE = VERBOSE)
             if b:
                 results['N'].append(N)

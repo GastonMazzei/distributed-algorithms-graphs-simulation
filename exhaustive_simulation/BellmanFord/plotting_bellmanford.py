@@ -11,42 +11,41 @@ if __name__=='__main__':
 
     # Prepare two axis
     p = str(round(results['P'][0]*100,0))
-    fig, ax1 = plt.subplots()
-    print(max(results['E']))
-    ax1.plot(results['N'], results['C'],label='Messages', c='k',lw=4,alpha=0.7, ls=':')
-    #ax1.plot(results['N'], results['T'],label='Time', c='g',lw=2,alpha=0.7, ls='-')
-    ax1.plot(results['N'], results['E'],label='Edges', c='r',lw=4,alpha=0.7, ls='-')
-    ax1.plot(results['N'], results['N'],label='Nodes', c='g',lw=2,alpha=0.5, ls='dotted')
-    y3 = np.asarray(results['N']) * np.asarray(results['E'])
-    ax1.plot(results['N'], y3,
-                            label='Edges * Nodes', c='y',lw=2,alpha=0.85, ls='-.')
-    ax1.grid(color='gray')
-    ax1.set_title(f'SynchBFS over Erdos Renyi with p: {p[:-2]}%')
-    ax1.set_ylim(1, max([max(results['C']),max(results['E']), max(y3)])*1.1)
-    ax1.tick_params(axis='y', colors='r')
-    ax1.set_xlabel('Number')
-    ax1.set_ylabel('Value (logscale)')
-    ax1.set_yscale('log')
-    TWIN = [False, True][0]
-    if TWIN:
-        ax2 = ax1.twinx()
-        ax2.scatter(results['N'],
-            [results['T'][i]/results['D'][i] for i in range(len(results['E']))],label=r'$\frac{Time}{Diameter}$',
-            c='g', lw=3)
-        ax2.set_ylabel('Quotient')
-        ax2.set_ylim(0,4)
-        ax2.legend()
-        ax2.tick_params(axis='y', colors='g')
-    if False:
-        ax1.set_yscale('log')
-        ax1.set_ylabel('Number (logscale)')
-    if False:
-        ax1.set_xscale('log')
-        ax1.set_xlabel('Number (logscale)')
-        if TWIN:
-            ax2.set_xscale('log')
-    plt.xlabel('Nodes')
-    ax1.legend()
-    #plt.yscale('log')
+    fig, ax = plt.subplots(1,2, figsize=(15,10))
+    
+    C = np.asarray(results['C'])
+    E = np.asarray(results['E'])
+    N = np.asarray(results['N'])
+    
+    # Plot raw data
+    ax[0].plot(N, C, label='Messages', c='k',lw=4,alpha=0.7, ls=':')
+    ax[0].plot(N, E, label='Edges', c='r',lw=4,alpha=0.7, ls='-')
+    ax[0].plot(N, N, label='Nodes', c='g',lw=2,alpha=0.5, ls='dotted')
+
+
+    # Plot the relevant quotient, as the message complexity is
+    # Communication ~ Nodes * Edges
+    y = (N * E)
+    print(y)
+    ax[1].scatter(C, y, label=r'$Edges \times Nodes$',c='y',alpha=1)
+    pol = np.polyfit(C,y,1)
+    ax[1].plot(C, np.polyval(pol,C), label='linear fit',c='k',lw=3,alpha=0.6, ls=':')
+
+    # Plot configuration
+    ax[0].grid(color='gray')
+    ax[0].set_title(f'SynchBFS over Erdos Renyi with p: {p[:-2]}%')
+    ax[1].set_title(f'Verification of the communication complexity')
+    ax[0].set_ylim(1, max([max(results['C']),max(results['E'])])*1.1)
+    ax[0].tick_params(axis='y', colors='r')
+    ax[0].set_xlabel('Number')
+    ax[0].set_ylabel('Value (log)')
+    ax[0].set_yscale('log')
+    ax[1].set_xscale('log')
+    ax[1].set_yscale('log')
+    ax[1].legend()
+    ax[1].set_xlabel('Communication (log)')
+    ax[1].set_ylabel('Value (log)')
+    ax[0].legend()
+
     plt.show()
     

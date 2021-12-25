@@ -13,7 +13,7 @@ from exhaustive_simulation.Simulation_aux import sub_iteration
 class Simulation():
     def __init__(self, N, p, is_it_weighted=False):
         self.i_ = 0
-        self.TOL = 25000
+        self.TOL = 50000
         self.graph = Graph(N,p, weighted = is_it_weighted)
         self.diam = compute_diam(self.graph)
         while ((self.diam==np.inf or not test_connectivity(self.graph.am)) and 

@@ -38,8 +38,8 @@ def main(N, p, VERBOSE = False):
 if __name__=='__main__':
     VERBOSE = [False, True][0]
     results = {'N':[], 'P':[], 'T':[], 'C':[], 'E':[], 'D':[]}
-    for p in [0.1]:
-        for N in range(5,100,5):
+    for p in [0.5]:
+        for N in range(5,100,15):
             T_loc, C_loc, E_loc, D_loc, b = main(N,p, VERBOSE = VERBOSE)
             if b:
                 results['N'].append(N)

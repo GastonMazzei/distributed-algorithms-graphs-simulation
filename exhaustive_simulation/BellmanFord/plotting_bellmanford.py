@@ -44,6 +44,6 @@ if __name__=='__main__':
     ax[1].set_xlabel('Communication (logscale)')
     ax[1].set_ylabel('Value (logscale)')
     ax[0].legend()
-
+    plt.savefig('exhaustive_simulation/BellmanFord/results.png')
     plt.show()
     

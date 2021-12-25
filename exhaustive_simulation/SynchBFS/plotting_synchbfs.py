@@ -41,5 +41,6 @@ if __name__=='__main__':
     ax[1].set_ylabel("Value (logscale)")
     ax[0].legend()
     ax[1].legend()
+    plt.savefig('exhaustive_simulation/SynchBFS/results.png')
     plt.show()
     

@@ -9,37 +9,46 @@ if __name__=='__main__':
     with open('exhaustive_simulation/FloodMax/results-floodmax.pkl', 'rb') as f:
         results = pickle.load(f)
 
-    # Prepare two axis
-
-
+    # Prepare data
+    p = str(round(results['P'][0]*100,0))
     D = np.asarray(results['D'])
+    N = np.asarray(results['N'])
     E = np.asarray(results['E'])
     C = np.asarray(results['C'])
+    fig, ax = plt.subplots(1,2,figsize=(15,10))
 
-    plt.plot(C, D*E);plt.show()
+    # Plot raw data
+    ax[0].plot(N, C,label='Messages', lw=4, c='k', ls=':')
+    ax[0].plot(N, E, label='Edges', lw=4, c='r', ls='-')
+    ax[0].plot(N, D, label='Depth', lw=4, c='g', ls='dotted')
+    
+    # Plot the relevant dependence, as the message complexity is
+    # Communication ~ Edges * Depth (p.54 Distributed Algorithms, Nancy Lynch)
+    y = D * E
+    ax[1].scatter(C, y, label=r'$Edges \times Depth$', c='y', alpha=1)
+    pol = np.polyfit(C,y,1)
+    ax[1].plot(C, np.polyval(pol,C), label='linear fit', c='k', lw=3, alpha=0.6, ls=':')
+
 
     
-    fig, ax1 = plt.subplots()
-    ax2 = ax1.twinx()
-
-
-
-    ax1.plot(results['N'], results['C'],label='Messages', c='k', ls=':')
-    ax1.plot(results['N'], results['E'],label='Edges', c='k', ls='-')
-    ax2.plot(results['N'],
-         [results['C'][i]/results['E'][i] for i in range(len(results['E']))],label=r'$\frac{Messages}{Edges}$',
-         c='r')
-    ax2.scatter(results['N'],
-         [results['C'][i]/results['E'][i] for i in range(len(results['E']))],
-         c='r', s=40)
-    ax1.set_ylabel('Number')
-    ax2.set_ylabel('Quotient')
-    ax2.set_ylim(1,15)
-    plt.xlabel('Nodes')
-    plt.legend()
-    #plt.yscale('log')
+    # Plot configuration
+    ax[0].grid(color='gray')
+    ax[0].set_title(f'FloodMax over Erdos Renyi with p: {p[:-2]}%')
+    ax[1].set_title(f'Verification of the communication complexity')
+    ax[0].set_ylim(1, max([max(results['C']),max(results['E']), max(D)])*1.1)
+    ax[0].tick_params(axis='y', colors='r')
+    ax[0].set_xlabel('Number of Nodes')
+    ax[0].set_ylabel('Value (logscale)')
+    ax[0].set_yscale('log')
+    ax[1].set_xscale('log')
+    ax[1].set_yscale('log')
+    ax[1].legend()
+    ax[1].set_xlabel('Communication (logscale)')
+    ax[1].set_ylabel('Value (logscale)')
+    plt.savefig('exhaustive_simulation/FloodMax/results.png')
     plt.show()
     
+    
 
 
 
@@ -47,8 +56,3 @@ if __name__=='__main__':
 
 
 
-ax1.set_xlabel('X data')
-ax1.set_ylabel('Y1 data', color='g')
-ax2.set_ylabel('Y2 data', color='b')
-
-plt.show()
